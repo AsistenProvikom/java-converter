@@ -1,0 +1,65 @@
+[
+  {
+    "game": "CarTraffic.jar",
+    "max_java_version": "Java 22",
+    "classes": 18,
+    "cheerpj_status": "supported",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "ready"
+  },
+  {
+    "game": "FrogieCrossTheRoad.jar",
+    "max_java_version": "Java 22",
+    "classes": 15,
+    "cheerpj_status": "supported_with_workarounds",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "workaround_required"
+  },
+  {
+    "game": "Minesweeper.jar",
+    "max_java_version": "Java 22",
+    "classes": 18,
+    "cheerpj_status": "supported_with_workarounds",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "workaround_required"
+  },
+  {
+    "game": "PaddleGame.jar",
+    "max_java_version": "Java 8",
+    "classes": 17,
+    "cheerpj_status": "supported_with_workarounds",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "workaround_required"
+  },
+  {
+    "game": "PongGame.jar",
+    "max_java_version": "Java 21 (LTS)",
+    "classes": 28,
+    "cheerpj_status": "supported_with_workarounds",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "workaround_required"
+  },
+  {
+    "game": "Snake Game FinPro.jar",
+    "max_java_version": "Java 22",
+    "classes": 11,
+    "cheerpj_status": "supported",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "ready"
+  },
+  {
+    "game": "flappy.jar",
+    "max_java_version": "Java 22",
+    "classes": 6,
+    "cheerpj_status": "supported",
+    "teavm_status": "unsupported",
+    "swingjs_status": "requires_source",
+    "feasibility": "ready"
+  }
+]

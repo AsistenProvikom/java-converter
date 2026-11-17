@@ -1,0 +1,241 @@
+{
+  "schema_version": "https://provikom.org/schema/v1/compatibility-report.json",
+  "metadata": {
+    "tool_name": "provikom-converter",
+    "tool_version": "0.1.0",
+    "analysis_timestamp": "2026-11-17T07:07:51.821097+00:00",
+    "target_file": "PaddleGame.jar",
+    "file_size_bytes": 9387639,
+    "sha256": "41b423488d9aba93f184ce56281417a836996417e5ed85404b8174034973b8dd"
+  },
+  "archive_summary": {
+    "total_entries": 40,
+    "total_classes": 17,
+    "total_resources": 18,
+    "total_native_libraries": 0,
+    "total_nested_archives": 0,
+    "total_uncompressed_bytes": 12706810,
+    "total_compressed_bytes": 9382313,
+    "resource_breakdown": {
+      ".mf": 1,
+      ".class": 17,
+      ".jpg": 5,
+      "": 1,
+      ".png": 2,
+      ".wav": 10
+    },
+    "security_warnings": []
+  },
+  "manifest": {
+    "main_class": "keyboarddemo.LevelFrame",
+    "class_path": [
+      "lib/AbsoluteLayout.jar"
+    ],
+    "created_by": "22.0.2+9-70 (Oracle Corporation)",
+    "build_jdk": null,
+    "raw_attributes": {
+      "Manifest-Version": "1.0",
+      "Ant-Version": "Apache Ant 1.10.14",
+      "Created-By": "22.0.2+9-70 (Oracle Corporation)",
+      "Class-Path": "lib/AbsoluteLayout.jar",
+      "X-COMMENT": "Main-Class will be added automatically by build",
+      "Main-Class": "keyboarddemo.LevelFrame"
+    }
+  },
+  "class_file_info": {
+    "min_major_version": 52,
+    "max_major_version": 52,
+    "min_java_version": "Java 8",
+    "max_java_version": "Java 8",
+    "unique_major_versions": [
+      52
+    ],
+    "has_native_methods": false
+  },
+  "features_detected": {
+    "gui_frameworks": [
+      {
+        "category": "gui",
+        "name": "Java Swing",
+        "description": "Desktop Swing UI components detected.",
+        "severity": "info",
+        "matched_symbols": [
+          "javax/swing/BorderFactory",
+          "javax/swing/ImageIcon",
+          "javax/swing/JButton",
+          "javax/swing/JFrame",
+          "javax/swing/JLabel",
+          "javax/swing/JOptionPane",
+          "javax/swing/JPanel",
+          "javax/swing/JTextField",
+          "javax/swing/SwingUtilities",
+          "javax/swing/Timer",
+          "javax/swing/UIManager",
+          "javax/swing/UIManager$LookAndFeelInfo",
+          "javax/swing/UnsupportedLookAndFeelException",
+          "javax/swing/WindowConstants"
+        ]
+      },
+      {
+        "category": "gui",
+        "name": "Java AWT",
+        "description": "Abstract Window Toolkit (AWT) graphics and event handling detected.",
+        "severity": "info",
+        "matched_symbols": [
+          "java/awt/Color",
+          "java/awt/Container",
+          "java/awt/Dimension",
+          "java/awt/EventQueue",
+          "java/awt/Font",
+          "java/awt/FontMetrics",
+          "java/awt/Graphics",
+          "java/awt/Point",
+          "java/awt/Toolkit",
+          "java/awt/Window",
+          "java/awt/event/ActionEvent",
+          "java/awt/event/ActionListener",
+          "java/awt/event/KeyAdapter",
+          "java/awt/event/KeyEvent"
+        ]
+      }
+    ],
+    "audio_apis": [
+      {
+        "category": "audio",
+        "name": "Java Sound Sampled (javax.sound.sampled)",
+        "description": "Audio playback (Clip, AudioSystem, Line) detected.",
+        "severity": "info",
+        "matched_symbols": [
+          "javax/sound/sampled/AudioSystem",
+          "javax/sound/sampled/Clip",
+          "javax/sound/sampled/LineEvent",
+          "javax/sound/sampled/LineEvent$Type",
+          "javax/sound/sampled/LineUnavailableException",
+          "javax/sound/sampled/UnsupportedAudioFileException"
+        ]
+      }
+    ],
+    "threading_apis": [
+      {
+        "category": "threading",
+        "name": "Standard Threading (java.lang.Thread / Runnable)",
+        "description": "Multi-threading or runnable game loop detected.",
+        "severity": "info",
+        "matched_symbols": [
+          "java/lang/Runnable",
+          "java/lang/Thread"
+        ]
+      }
+    ],
+    "io_apis": [
+      {
+        "category": "io",
+        "name": "Direct File System I/O (java.io.File)",
+        "description": "Direct disk file read/write detected. Requires virtual filesystem in browser.",
+        "severity": "warning",
+        "matched_symbols": [
+          "java/io/File",
+          "java/io/FileInputStream",
+          "java/io/FileOutputStream"
+        ]
+      }
+    ],
+    "network_apis": [],
+    "reflection_apis": [],
+    "external_libraries": [
+      {
+        "category": "external_library",
+        "name": "NetBeans AbsoluteLayout",
+        "description": "NetBeans visual GUI designer AbsoluteLayout library required.",
+        "severity": "warning",
+        "matched_symbols": [
+          "org/netbeans/lib/awtextra/AbsoluteConstraints",
+          "org/netbeans/lib/awtextra/AbsoluteLayout"
+        ]
+      }
+    ],
+    "native_features": []
+  },
+  "backend_compatibility": {
+    "cheerpj": {
+      "backend_id": "cheerpj",
+      "backend_name": "CheerpJ 5.0 (Leaning Technologies)",
+      "is_open_source": false,
+      "status": "supported_with_workarounds",
+      "confidence_score": 0.9,
+      "summary": "CheerpJ can run this game provided external dependencies or virtual filesystem assets are staged.",
+      "verified_capabilities": [
+        "Accepts compiled binary JAR input directly without source code.",
+        "Bytecode major version 52 (Java 8) is supported by CheerpJ 5.0 runtime.",
+        "CheerpJ provides client-side OpenJDK AWT/Swing canvas rendering."
+      ],
+      "assumptions_and_risks": [
+        "Browser audio autoplay policy requires user interaction before audio starts.",
+        "Direct disk file operations access in-memory CheerpOS virtual filesystem (data resets on refresh unless indexedDB persistence is configured)."
+      ],
+      "blockers": [],
+      "workarounds_needed": [
+        "Requires external NetBeans 'lib/AbsoluteLayout.jar' mounted into CheerpOS filesystem.",
+        "Ensure game startup waits for user click or initialize Web Audio context on user gesture."
+      ],
+      "remediation_steps": [
+        "Bundle 'AbsoluteLayout.jar' and load it before launching the main JAR."
+      ]
+    },
+    "teavm": {
+      "backend_id": "teavm",
+      "backend_name": "TeaVM (AOT Bytecode to JS/Wasm)",
+      "is_open_source": true,
+      "status": "unsupported",
+      "confidence_score": 0.98,
+      "summary": "TeaVM cannot compile this desktop game directly because Swing and AWT are missing from its class library.",
+      "verified_capabilities": [
+        "Open-source ahead-of-time (AOT) compiler targeting JavaScript and WebAssembly."
+      ],
+      "assumptions_and_risks": [
+        "Thread.sleep() and blocking loops require TeaVM asynchronous transformation mode or event-loop refactoring."
+      ],
+      "blockers": [
+        "TeaVM does not provide an implementation of 'javax.swing.*' or 'java.awt.*'.",
+        "TeaVM core does not implement 'javax.sound.sampled.*' (AudioSystem/Clip)."
+      ],
+      "workarounds_needed": [],
+      "remediation_steps": [
+        "Port the user interface to TeaVM Canvas / HTML5 DOM or use an AWT-to-Canvas compatibility layer.",
+        "Implement custom TeaVM JavaScript overlays using Web Audio API."
+      ]
+    },
+    "swingjs": {
+      "backend_id": "swingjs",
+      "backend_name": "SwingJS / Java2Script",
+      "is_open_source": true,
+      "status": "requires_source",
+      "confidence_score": 0.95,
+      "summary": "SwingJS provides high Swing UI compatibility, but requires original or decompiled Java source and Java 8/11 syntax.",
+      "verified_capabilities": [
+        "Open-source Java-to-JavaScript system with comprehensive Swing and AWT emulation."
+      ],
+      "assumptions_and_risks": [],
+      "blockers": [
+        "SwingJS requires Java source code (.java) for AST transpilation; it cannot compile standalone binary JARs directly."
+      ],
+      "workarounds_needed": [
+        "NetBeans AbsoluteLayout source must be included in the SwingJS build classpath."
+      ],
+      "remediation_steps": [
+        "Provide original Java source code or decompile the JAR classes using CFR / Fernflower."
+      ]
+    }
+  },
+  "recommendation": {
+    "primary_backend": "cheerpj",
+    "secondary_backend": "swingjs",
+    "feasibility": "workaround_required",
+    "key_takeaways": [
+      "Requires external NetBeans 'lib/AbsoluteLayout.jar' mounted into CheerpOS filesystem.",
+      "Ensure game startup waits for user click or initialize Web Audio context on user gesture.",
+      "SwingJS is a viable open-source secondary path if source code is decompiled or provided.",
+      "TeaVM cannot be used directly due to missing desktop Swing/AWT runtime support."
+    ]
+  }
+}

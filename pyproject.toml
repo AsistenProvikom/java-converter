@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "provikom-converter"
+version = "0.1.0"
+description = "Java game-to-web publishing tool with static zero-execution bytecode analyzer."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Hafidz Mulia", email = "hafidz.mulia@silog.co.id" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Games/Entertainment",
+]
+
+[project.scripts]
+provikom-converter = "provikom_converter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["provikom_converter*"]

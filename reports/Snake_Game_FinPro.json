@@ -1,0 +1,180 @@
+{
+  "schema_version": "https://provikom.org/schema/v1/compatibility-report.json",
+  "metadata": {
+    "tool_name": "provikom-converter",
+    "tool_version": "0.1.0",
+    "analysis_timestamp": "2026-11-17T07:07:51.831616+00:00",
+    "target_file": "Snake Game FinPro.jar",
+    "file_size_bytes": 30877,
+    "sha256": "c045926d785b879ec13fbb3854024dcf278ecd28eb66588eaf787cd4cbf6f363"
+  },
+  "archive_summary": {
+    "total_entries": 12,
+    "total_classes": 11,
+    "total_resources": 0,
+    "total_native_libraries": 0,
+    "total_nested_archives": 0,
+    "total_uncompressed_bytes": 55983,
+    "total_compressed_bytes": 29201,
+    "resource_breakdown": {
+      ".mf": 1,
+      ".class": 11
+    },
+    "security_warnings": []
+  },
+  "manifest": {
+    "main_class": "SnakeMain",
+    "class_path": [],
+    "created_by": null,
+    "build_jdk": null,
+    "raw_attributes": {
+      "Manifest-Version": "1.0",
+      "Main-Class": "SnakeMain"
+    }
+  },
+  "class_file_info": {
+    "min_major_version": 66,
+    "max_major_version": 66,
+    "min_java_version": "Java 22",
+    "max_java_version": "Java 22",
+    "unique_major_versions": [
+      66
+    ],
+    "has_native_methods": false
+  },
+  "features_detected": {
+    "gui_frameworks": [
+      {
+        "category": "gui",
+        "name": "Java Swing",
+        "description": "Desktop Swing UI components detected.",
+        "severity": "info",
+        "matched_symbols": [
+          "javax/swing/ImageIcon",
+          "javax/swing/JFrame",
+          "javax/swing/JOptionPane",
+          "javax/swing/JPanel",
+          "javax/swing/SwingUtilities",
+          "javax/swing/Timer",
+          "javax/swing/UIManager",
+          "javax/swing/WindowConstants"
+        ]
+      },
+      {
+        "category": "gui",
+        "name": "Java AWT",
+        "description": "Abstract Window Toolkit (AWT) graphics and event handling detected.",
+        "severity": "info",
+        "matched_symbols": [
+          "java/awt/AlphaComposite",
+          "java/awt/BasicStroke",
+          "java/awt/Color",
+          "java/awt/Composite",
+          "java/awt/Container",
+          "java/awt/Dimension",
+          "java/awt/Font",
+          "java/awt/FontMetrics",
+          "java/awt/GradientPaint",
+          "java/awt/Graphics",
+          "java/awt/Graphics2D",
+          "java/awt/Image",
+          "java/awt/RadialGradientPaint",
+          "java/awt/Rectangle",
+          "java/awt/RenderingHints"
+        ]
+      }
+    ],
+    "audio_apis": [],
+    "threading_apis": [],
+    "io_apis": [
+      {
+        "category": "io",
+        "name": "Direct File System I/O (java.io.File)",
+        "description": "Direct disk file read/write detected. Requires virtual filesystem in browser.",
+        "severity": "warning",
+        "matched_symbols": [
+          "java/io/File",
+          "java/io/FileInputStream",
+          "java/io/FileOutputStream"
+        ]
+      }
+    ],
+    "network_apis": [],
+    "reflection_apis": [],
+    "external_libraries": [],
+    "native_features": []
+  },
+  "backend_compatibility": {
+    "cheerpj": {
+      "backend_id": "cheerpj",
+      "backend_name": "CheerpJ 5.0 (Leaning Technologies)",
+      "is_open_source": false,
+      "status": "supported",
+      "confidence_score": 0.92,
+      "summary": "CheerpJ supports this JAR directly with high expected compatibility.",
+      "verified_capabilities": [
+        "Accepts compiled binary JAR input directly without source code.",
+        "Bytecode major version 66 (Java 22) is supported by CheerpJ 5.0 runtime.",
+        "CheerpJ provides client-side OpenJDK AWT/Swing canvas rendering."
+      ],
+      "assumptions_and_risks": [
+        "Direct disk file operations access in-memory CheerpOS virtual filesystem (data resets on refresh unless indexedDB persistence is configured)."
+      ],
+      "blockers": [],
+      "workarounds_needed": [],
+      "remediation_steps": []
+    },
+    "teavm": {
+      "backend_id": "teavm",
+      "backend_name": "TeaVM (AOT Bytecode to JS/Wasm)",
+      "is_open_source": true,
+      "status": "unsupported",
+      "confidence_score": 0.98,
+      "summary": "TeaVM cannot compile this desktop game directly because Swing and AWT are missing from its class library.",
+      "verified_capabilities": [
+        "Open-source ahead-of-time (AOT) compiler targeting JavaScript and WebAssembly."
+      ],
+      "assumptions_and_risks": [
+        "Bytecode version 66 (Java 22) may require TeaVM bytecode parser updates or target release downgrade."
+      ],
+      "blockers": [
+        "TeaVM does not provide an implementation of 'javax.swing.*' or 'java.awt.*'."
+      ],
+      "workarounds_needed": [],
+      "remediation_steps": [
+        "Port the user interface to TeaVM Canvas / HTML5 DOM or use an AWT-to-Canvas compatibility layer."
+      ]
+    },
+    "swingjs": {
+      "backend_id": "swingjs",
+      "backend_name": "SwingJS / Java2Script",
+      "is_open_source": true,
+      "status": "requires_source",
+      "confidence_score": 0.95,
+      "summary": "SwingJS provides high Swing UI compatibility, but requires original or decompiled Java source and Java 8/11 syntax.",
+      "verified_capabilities": [
+        "Open-source Java-to-JavaScript system with comprehensive Swing and AWT emulation."
+      ],
+      "assumptions_and_risks": [],
+      "blockers": [
+        "SwingJS requires Java source code (.java) for AST transpilation; it cannot compile standalone binary JARs directly.",
+        "Class bytecode is Java 22 (major 66). SwingJS's transpiler is designed for Java 8 (with experimental Java 11 support)."
+      ],
+      "workarounds_needed": [],
+      "remediation_steps": [
+        "Provide original Java source code or decompile the JAR classes using CFR / Fernflower.",
+        "Downgrade or retarget decompiled Java source to Java 8/11 language level."
+      ]
+    }
+  },
+  "recommendation": {
+    "primary_backend": "cheerpj",
+    "secondary_backend": "swingjs",
+    "feasibility": "ready",
+    "key_takeaways": [
+      "Can be directly published using CheerpJ 5.0 with zero source code modifications.",
+      "SwingJS is a viable open-source secondary path if source code is decompiled or provided.",
+      "TeaVM cannot be used directly due to missing desktop Swing/AWT runtime support."
+    ]
+  }
+}
