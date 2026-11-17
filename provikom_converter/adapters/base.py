@@ -1,8 +1,8 @@
 """Backend Adapter Interface Specification for Provikom Converter.
 
 Defines the contract for browser runtime compilers, emulators, and transpilers.
-Separates analysis, planning, conversion, and packaging into independently
-maintainable components.
+Separates analysis, planning, conversion, artifact generation, and packaging
+into independently maintainable components.
 """
 
 from __future__ import annotations
@@ -16,6 +16,16 @@ from provikom_converter.analyzer.compatibility import BackendEvaluation
 from provikom_converter.analyzer.rules import AnalysisFeatures
 
 
+class UnsupportedRuntimeError(Exception):
+    """Raised when an archive's bytecode cannot be targeted by the backend runtime."""
+    pass
+
+
+class MissingDependencyError(Exception):
+    """Raised when a required manifest Class-Path dependency is missing."""
+    pass
+
+
 @dataclass
 class ConversionOptions:
     """Options configuring artifact generation."""
@@ -23,10 +33,49 @@ class ConversionOptions:
     game_title: str
     auto_start: bool = True
     enable_audio: bool = True
-    virtual_mount_root: str = "/str/"
+    virtual_mount_root: str = "/app/"
     custom_heap_size_mb: int = 256
     extra_classpath: List[str] = field(default_factory=list)
     generate_standalone_html: bool = True
+
+
+@dataclass
+class BuildOptions:
+    """Options for building playable web artifacts."""
+    output_directory: str
+    backend: str = "cheerpj"
+    game_title: Optional[str] = None
+    force_overwrite: bool = False
+    enable_audio: bool = True
+    custom_heap_size_mb: int = 256
+    virtual_mount_root: str = "/app/"
+    source_jar_dir: Optional[str] = None
+
+
+@dataclass
+class StagedDependency:
+    """Represents a resolved auxiliary dependency staged into the web artifact."""
+    source_path: str
+    relative_path: str
+    virtual_path: str
+    size_bytes: int
+
+
+@dataclass
+class BuildResult:
+    """Result of building a playable web artifact."""
+    backend_id: str
+    output_directory: str
+    entry_html: str
+    game_jar_name: str
+    game_title: str
+    runtime_version: int
+    runtime_label: str
+    is_experimental: bool
+    staged_dependencies: List[StagedDependency] = field(default_factory=list)
+    generated_files: List[str] = field(default_factory=list)
+    manifest_path: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -118,6 +167,15 @@ class BackendAdapter(ABC):
         options: ConversionOptions,
     ) -> ConversionPlan:
         """Plan the necessary steps for web conversion."""
+        pass
+
+    @abstractmethod
+    def generate_artifact(
+        self,
+        analysis_result: Any,
+        options: BuildOptions,
+    ) -> BuildResult:
+        """Generate a self-contained playable web artifact directory."""
         pass
 
     @abstractmethod

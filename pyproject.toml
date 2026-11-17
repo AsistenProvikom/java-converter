@@ -20,6 +20,7 @@ classifiers = [
 ]
 
 [project.scripts]
+provikom = "provikom_converter.cli:main"
 provikom-converter = "provikom_converter.cli:main"
 
 [tool.setuptools.packages.find]

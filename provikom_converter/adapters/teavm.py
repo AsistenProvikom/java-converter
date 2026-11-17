@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, List
 
 from provikom_converter.adapters.base import (
     BackendAdapter,
+    BuildOptions,
+    BuildResult,
     ConversionOptions,
     ConversionPlan,
     ConversionStep,
@@ -102,6 +104,13 @@ class TeaVMAdapter(BackendAdapter):
             required_tools=["teavm-cli", "java-21-jdk"],
             estimated_difficulty="blocked" if not is_feasible else "medium",
         )
+
+    def generate_artifact(
+        self,
+        analysis_result: Any,
+        options: BuildOptions,
+    ) -> BuildResult:
+        raise NotImplementedError("TeaVM artifact generation is scheduled for future milestones.")
 
     def get_runtime_dependencies(self) -> List[str]:
         return []  # TeaVM produces self-contained JS/Wasm

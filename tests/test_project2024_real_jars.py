@@ -6,10 +6,11 @@ from pathlib import Path
 
 from provikom_converter.analyzer.compatibility import CompatibilityStatus
 from provikom_converter.orchestration.pipeline import ConverterPipeline
+from tests.fixtures import find_project2024_games_dir
 
 
 class TestProject2024RealJars(unittest.TestCase):
-    GAMES_DIR = Path("/tmp/project-2024/games")
+    GAMES_DIR = find_project2024_games_dir()
 
     EXPECTED_GAMES = {
         "CarTraffic.jar": {

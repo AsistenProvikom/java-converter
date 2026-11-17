@@ -3,9 +3,33 @@
 from __future__ import annotations
 
 import io
+import os
 import struct
 import zipfile
+from pathlib import Path
 from typing import List, Optional, Tuple
+
+
+def find_project2024_games_dir() -> Path:
+    """Locate the AsistenProvikom project-2024 games directory for integration tests."""
+    env_dir = os.environ.get("PROVIKOM_GAMES_DIR")
+    candidates: List[Path] = []
+    if env_dir:
+        candidates.append(Path(env_dir))
+
+    repo_root = Path(__file__).resolve().parent.parent
+    candidates.extend(
+        [
+            repo_root.parent / "project-2024" / "games",
+            Path("/home/hafidz/project/project-2024/games"),
+            Path("/tmp/project-2024/games"),
+        ]
+    )
+
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[-1]
 
 
 def create_minimal_class_bytes(

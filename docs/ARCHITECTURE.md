@@ -144,6 +144,13 @@ class BackendAdapter(ABC):
     ) -> ConversionPlan: ...
 
     @abstractmethod
+    def generate_artifact(
+        self,
+        analysis_result: Any,
+        options: BuildOptions,
+    ) -> BuildResult: ...
+
+    @abstractmethod
     def get_runtime_dependencies(self) -> List[str]: ...
 ```
 
@@ -180,3 +187,127 @@ class BackendAdapter(ABC):
 ### 7.2 CI/CD Runner Security
 - Untrusted contributions and pull requests must **never** run on self-hosted lab runners with access to internal network zones.
 - Analysis workflows run strictly inside isolated, ephemeral GitHub-hosted runners with no elevated privileges.
+
+---
+
+## 8. Milestone 2A: CheerpJ Artifact Generation
+
+### 8.1 Build Pipeline
+
+`ConverterPipeline.build_artifact()` reuses the same zero-execution analysis path as `analyze_jar()`, then delegates to the selected backend adapter:
+
+```text
+JAR -> SafeArchiveReader -> ClassFileReader -> FeatureDetector
+    -> CompatibilityEvaluator -> CheerpJAdapter.generate_artifact()
+    -> static web bundle + manifest.json
+```
+
+Only `CheerpJAdapter` implements `generate_artifact()` in Milestone 2A. `TeaVMAdapter` and `SwingJSAdapter` satisfy the interface but raise `NotImplementedError` so unsupported backends cannot silently produce incomplete bundles.
+
+### 8.2 Generated Artifact Model
+
+```text
+<output>/
+├── index.html          # Accessible player shell and overlays
+├── style.css           # Responsive player layout
+├── app.js              # CheerpJ runtime controller
+├── manifest.json       # Build metadata and compatibility record
+├── <Game>.jar          # Unmodified input archive
+└── lib/                # Staged manifest Class-Path dependencies
+```
+
+The web root is served directly. CheerpJ assets are mounted under `/app/`, so the main JAR resolves to `/app/<Game>.jar` and a dependency such as `lib/AbsoluteLayout.jar` resolves to `/app/lib/AbsoluteLayout.jar`.
+
+### 8.3 Runtime Selection
+
+| Bytecode major | CheerpJ runtime | Stability |
+|---:|---|---|
+| 45-52 | Java 8 | Stable |
+| 53-65 | Java 21 LTS | Stable |
+| 66 | Java 25 preview candidate | Experimental |
+| < 45 or > 66 | Rejected | Unsupported |
+
+The generated manifest records the runtime version, label, selection reason, and experimental flag. The player displays an experimental badge when applicable.
+
+### 8.4 Dependency Resolution and Staging
+
+For each manifest `Class-Path` entry:
+
+1. Normalize separators and remove leading `./` segments.
+2. Reject URLs, absolute paths, and `..` traversal.
+3. Search the source JAR directory, its parent, and adjacent `lib/` locations.
+4. Copy the dependency into the bundle at the same relative path.
+5. Add the dependency's `/app/...` path to the explicit CheerpJ classpath.
+6. Record relative path, virtual path, size, and SHA-256 in `manifest.json`.
+
+Missing or unsafe dependencies fail the build before any bundle is written.
+
+### 8.5 Browser-Side Runtime Flow
+
+```text
+User clicks Launch
+  -> cheerpjInit({ version, status: "none" })
+  -> HEAD-check main JAR and staged dependencies
+  -> cheerpjCreateDisplay(-1, -1, #cheerpj-display)
+  -> cheerpjRunMain(mainClass, classPath.join(":"))
+       (fallback: cheerpjRunJar(jarVirtualPath))
+  -> set data-status = running | exited | error
+```
+
+The player:
+
+- Requires a user gesture before initializing, so audio unlock policies are satisfied.
+- Buffers console output to detect Java exceptions (`ExceptionInInitializerError`, `NoClassDefFoundError`, `No line matching interface`, and similar patterns).
+- Shows a diagnostics overlay with a copyable stack trace.
+- Escapes all archive-derived text before HTML insertion.
+- Serializes runtime configuration with `json.dumps`.
+
+### 8.6 HTTP Range Serving
+
+`provikom_converter.server.RangeRequestHandler` extends `SimpleHTTPRequestHandler` with:
+
+- `Accept-Ranges: bytes` on all responses.
+- Single-range `206 Partial Content` support for `bytes=start-end`, `bytes=start-`, and `bytes=-suffix`.
+- `416 Range Not Satisfiable` for invalid or out-of-bounds ranges.
+- Correct `Content-Range`, `Content-Length`, and `Last-Modified` headers.
+- HTTP/1.1 keep-alive behavior and CORS headers.
+- Optional access logging via `PROVIKOM_HTTP_LOG=1`.
+
+This server is a development/preview convenience. Production deployments can use any static host that supports Range Requests.
+
+---
+
+## 9. Browser Verification Architecture
+
+The browser harness in `tests/test_browser_smoke.py` launches headless Chromium through Playwright, serves generated bundles through `RangeRequestHandler`, and verifies:
+
+- No uncaught page errors during load.
+- The canvas mounts within a bounded timeout.
+- Keyboard input is delivered after focusing the canvas.
+- Dependency JARs are served with Range support.
+- Java exceptions are surfaced in the player error overlay.
+- Build output exists and overwrite protection works.
+
+Tests capture screenshots into `docs/screenshots/`. They require the CheerpJ CDN and the local game JARs. `PROVIKOM_SKIP_BROWSER=1` skips browser classes for offline or minimal environments.
+
+---
+
+## 10. Known Runtime Limitations
+
+- **PongGame:** 8-bit mono 44.1 kHz WAV audio is rejected by browser `Clip` support. The player surfaces `No line matching interface Clip ...` as a Java Runtime Error. This is a game/runtime audio compatibility limitation, not a packaging defect.
+- **PaddleGame:** logs non-fatal `mark/reset not supported` audio exceptions; rendering and interaction still work.
+- **Java 22:** requires the experimental Java 25 preview runtime.
+- **CheerpJ CDN:** network access is required unless an enterprise self-hosted package is used.
+- **Startup latency:** large archives can take roughly 15 seconds to mount a canvas in headless Chromium.
+- **Milestone scope:** TeaVM and SwingJS artifact generation remain unimplemented.
+
+---
+
+## 11. Security Invariants Preserved
+
+- Game code is never executed on the host; analysis remains binary parsing only.
+- Input JARs are copied unchanged into artifacts.
+- Archive traversal, zip bombs, excessive entry counts, and abnormal compression ratios remain guarded.
+- Output paths for staged dependencies are checked to remain inside the artifact directory.
+- Generated HTML escapes untrusted archive strings.
+- Browser verification runs in headless Chromium on ephemeral environments.
