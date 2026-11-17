@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-11-17T15:13:57Z",
+  "schema_version": "1.1",
+  "generated_at": "2026-11-17T16:30:00Z",
   "provikom_converter_version": "0.1.0",
   "backend": "cheerpj",
   "backend_display_name": "CheerpJ 5.0",
@@ -15,6 +15,22 @@
   "entry_point": "index.html",
   "jar_file": "PongGame.jar",
   "java_major_version": 65,
+  "lifecycle": {
+    "state": "failed",
+    "prediction_only": false,
+    "execution_verified": false,
+    "source": "browser_verification",
+    "verification": {
+      "state": "failed",
+      "automated": true,
+      "manual": false,
+      "record": "verification.json",
+      "screenshots": [
+        "docs/screenshots/pong_audio_error.png"
+      ],
+      "console_errors": []
+    }
+  },
   "game": {
     "title": "Pong Game",
     "jar_file": "PongGame.jar",
@@ -72,6 +88,7 @@
     "style.css",
     "app.js",
     "manifest.json",
-    "PongGame.jar"
+    "PongGame.jar",
+    "verification.json"
   ]
 }

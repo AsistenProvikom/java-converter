@@ -6,7 +6,7 @@ import http.server
 import os
 import re
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 
 class RangeRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -139,7 +139,7 @@ class RangeFileWrapper:
         self.file_obj.close()
 
 
-def run_server(directory: str | Path, port: int = 8080, host: str = "0.0.0.0") -> None:
+def run_server(directory: Union[str, Path], port: int = 8080, host: str = "0.0.0.0") -> None:
     """Run a standalone HTTP server with Range Request support."""
     directory = str(Path(directory).resolve())
 

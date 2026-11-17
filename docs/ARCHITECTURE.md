@@ -186,7 +186,10 @@ class BackendAdapter(ABC):
 
 ### 7.2 CI/CD Runner Security
 - Untrusted contributions and pull requests must **never** run on self-hosted lab runners with access to internal network zones.
-- Analysis workflows run strictly inside isolated, ephemeral GitHub-hosted runners with no elevated privileges.
+- Analysis and browser workflows run strictly inside isolated, ephemeral GitHub-hosted runners with no elevated privileges.
+- Workflow permissions are limited to `contents: read`, and checkout credentials are not persisted.
+- Game fixtures are checked out from a pinned `project-2024` commit rather than a moving branch.
+- Missing fixtures, browser dependencies, or CheerpJ CDN access fail the job; CI does not silently downgrade to skipped verification.
 
 ---
 
@@ -262,7 +265,32 @@ The player:
 - Escapes all archive-derived text before HTML insertion.
 - Serializes runtime configuration with `json.dumps`.
 
-### 8.6 HTTP Range Serving
+### 8.6 Safe Transactional Artifact Publishing
+
+`--force` artifact replacement is destructive by nature. `provikom_converter.build_safety` validates paths before any deletion and publishes completed builds atomically:
+
+```text
+validate source/output relationship
+  -> reject source JAR, source parent, source ancestors, filesystem roots, and symlinks
+  -> create temporary sibling directory
+  -> generate artifact
+  -> atomically rename temporary directory into place
+  -> preserve previous artifact on failure
+```
+
+Existing artifacts are renamed to a backup only after the new build has completed. If publishing fails, the backup is restored. Temporary directories are removed on both success and failure paths.
+
+### 8.7 Lifecycle and Verification Evidence
+
+`provikom_converter.lifecycle` keeps three questions separate:
+
+1. What does static analysis predict? (`compatibility` blocks)
+2. Did artifact generation succeed? (`lifecycle.state = built`)
+3. Did the game actually render and respond in a browser? (`runtime_verified` or `failed`)
+
+A mounted canvas is not runtime verification. Only a verification record with browser checks can promote an artifact. Evidence is written to `verification.json` and referenced from the manifest lifecycle block. The static compatibility prediction is never rewritten by browser results.
+
+### 8.8 HTTP Range Serving
 
 `provikom_converter.server.RangeRequestHandler` extends `SimpleHTTPRequestHandler` with:
 
@@ -282,22 +310,32 @@ This server is a development/preview convenience. Production deployments can use
 The browser harness in `tests/test_browser_smoke.py` launches headless Chromium through Playwright, serves generated bundles through `RangeRequestHandler`, and verifies:
 
 - No uncaught page errors during load.
-- The canvas mounts within a bounded timeout.
-- Keyboard input is delivered after focusing the canvas.
-- Dependency JARs are served with Range support.
-- Java exceptions are surfaced in the player error overlay.
-- Build output exists and overwrite protection works.
+- The visible main canvas mounts within a bounded timeout.
+- Pillow analyzes canvas screenshots for color diversity, luminance variance, non-dark content, and game-specific color distributions.
+- CarTraffic character selection and NEXT navigation produce a visible UI change.
+- Flappy PLAY navigation produces a visible gameplay change.
+- PaddleGame level selection starts the Easy mode game UI and its `AbsoluteLayout.jar` dependency is served with Range support.
+- PongGame surfaces its known `No line matching interface Clip` Java error.
+- Console diagnostics, screenshots, and lifecycle evidence are retained.
+- Build output exists and non-empty overwrite protection works.
 
-Tests capture screenshots into `docs/screenshots/`. They require the CheerpJ CDN and the local game JARs. `PROVIKOM_SKIP_BROWSER=1` skips browser classes for offline or minimal environments.
+Evidence records are written to `docs/verification/<game>.json`; screenshots are written to `docs/screenshots/`. The Pong artifact is intentionally retained under `build/verification/pong` for debugging.
+
+Strict mode is required in CI:
+
+- `PROVIKOM_REQUIRE_FIXTURES=1` makes missing fixtures fatal.
+- `PROVIKOM_REQUIRE_BROWSER=1` makes missing Playwright/Pillow/CDN access fatal.
+- `PROVIKOM_SKIP_BROWSER=1` is a local convenience only and is never used by the browser CI job.
 
 ---
 
 ## 10. Known Runtime Limitations
 
-- **PongGame:** 8-bit mono 44.1 kHz WAV audio is rejected by browser `Clip` support. The player surfaces `No line matching interface Clip ...` as a Java Runtime Error. This is a game/runtime audio compatibility limitation, not a packaging defect.
+- **PongGame:** 8-bit mono 44.1 kHz WAV audio is rejected by browser `Clip` support. The player surfaces `No line matching interface Clip ...` as a Java Runtime Error and the lifecycle remains `failed`. This is a game/runtime audio compatibility limitation, not a packaging defect.
 - **PaddleGame:** logs non-fatal `mark/reset not supported` audio exceptions; rendering and interaction still work.
+- **Flappy:** keyboard events were dispatched after canvas focus in the headless harness, but the local run showed no visual delta. PLAY navigation is the asserted interaction; the verification record preserves the raw keyboard evidence ratio.
 - **Java 22:** requires the experimental Java 25 preview runtime.
-- **CheerpJ CDN:** network access is required unless an enterprise self-hosted package is used.
+- **CheerpJ:** is proprietary and requires CDN access unless a vendor-supported self-hosted/enterprise package is used.
 - **Startup latency:** large archives can take roughly 15 seconds to mount a canvas in headless Chromium.
 - **Milestone scope:** TeaVM and SwingJS artifact generation remain unimplemented.
 
@@ -305,9 +343,12 @@ Tests capture screenshots into `docs/screenshots/`. They require the CheerpJ CDN
 
 ## 11. Security Invariants Preserved
 
-- Game code is never executed on the host; analysis remains binary parsing only.
+- Game code is never executed on the host during analysis; analysis remains binary parsing only.
 - Input JARs are copied unchanged into artifacts.
 - Archive traversal, zip bombs, excessive entry counts, and abnormal compression ratios remain guarded.
+- Artifact output paths are validated against the source JAR before `--force` deletion.
+- Builds publish atomically and preserve prior artifacts when generation fails.
 - Output paths for staged dependencies are checked to remain inside the artifact directory.
 - Generated HTML escapes untrusted archive strings.
-- Browser verification runs in headless Chromium on ephemeral environments.
+- Browser verification runs in headless Chromium on ephemeral GitHub-hosted runners.
+- Untrusted pull requests must not run on privileged self-hosted runners.

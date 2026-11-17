@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-11-17T15:13:58Z",
+  "schema_version": "1.1",
+  "generated_at": "2026-11-17T16:30:00Z",
   "provikom_converter_version": "0.1.0",
   "backend": "cheerpj",
   "backend_display_name": "CheerpJ 5.0",
@@ -15,6 +15,24 @@
   "entry_point": "index.html",
   "jar_file": "flappy.jar",
   "java_major_version": 66,
+  "lifecycle": {
+    "state": "runtime_verified",
+    "prediction_only": false,
+    "execution_verified": true,
+    "source": "browser_verification",
+    "verification": {
+      "state": "runtime_verified",
+      "automated": true,
+      "manual": false,
+      "record": "verification.json",
+      "screenshots": [
+        "docs/screenshots/flappy_menu.png",
+        "docs/screenshots/flappy_running.png",
+        "docs/screenshots/flappy_interaction.png"
+      ],
+      "console_errors": []
+    }
+  },
   "game": {
     "title": "Flappy",
     "jar_file": "flappy.jar",
@@ -64,6 +82,7 @@
     "style.css",
     "app.js",
     "manifest.json",
-    "flappy.jar"
+    "flappy.jar",
+    "verification.json"
   ]
 }

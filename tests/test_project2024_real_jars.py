@@ -6,7 +6,7 @@ from pathlib import Path
 
 from provikom_converter.analyzer.compatibility import CompatibilityStatus
 from provikom_converter.orchestration.pipeline import ConverterPipeline
-from tests.fixtures import find_project2024_games_dir
+from tests.fixtures import find_project2024_games_dir, require_fixture
 
 
 class TestProject2024RealJars(unittest.TestCase):
@@ -51,8 +51,7 @@ class TestProject2024RealJars(unittest.TestCase):
     }
 
     def setUp(self):
-        if not self.GAMES_DIR.exists():
-            self.skipTest(f"Project 2024 games directory {self.GAMES_DIR} not found.")
+        require_fixture(self.GAMES_DIR / "CarTraffic.jar", label="project-2024 games directory")
 
     def test_audit_all_seven_games(self):
         pipeline = ConverterPipeline()
