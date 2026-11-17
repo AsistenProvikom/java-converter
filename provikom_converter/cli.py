@@ -9,8 +9,13 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from provikom_converter.adapters.base import (
+    MissingDependencyError,
+    UnsupportedRuntimeError,
+)
 from provikom_converter.analyzer.archive import ArchiveSecurityError
 from provikom_converter.orchestration.pipeline import ConverterPipeline
+from provikom_converter.server import run_server
 from provikom_converter.version import __version__
 
 
@@ -93,6 +98,88 @@ def run_analyze(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_build(args: argparse.Namespace) -> int:
+    target = Path(args.jar_path)
+    if not target.exists():
+        print(f"Error: Target path '{target}' does not exist.", file=sys.stderr)
+        return 1
+
+    out_dir = Path(args.output)
+    pipeline = ConverterPipeline()
+
+    try:
+        print(f"Building playable web artifact for '{target.name}' using '{args.backend}' backend...")
+        result = pipeline.build_artifact(
+            jar_path=target,
+            output_dir=out_dir,
+            backend=args.backend,
+            game_title=args.title,
+            force_overwrite=args.force,
+        )
+    except ArchiveSecurityError as e:
+        print(f"Security Error: Untrusted archive rejected: {e}", file=sys.stderr)
+        return 2
+    except UnsupportedRuntimeError as e:
+        print(f"Runtime Selection Error: {e}", file=sys.stderr)
+        return 1
+    except MissingDependencyError as e:
+        print(f"Dependency Error: {e}", file=sys.stderr)
+        return 1
+    except FileExistsError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Build failed: {e}", file=sys.stderr)
+        return 1
+
+    print("\n" + "=" * 68)
+    print("  BUILD SUCCESSFUL")
+    print("=" * 68)
+    print(f"  Game Title:        {result.game_title}")
+    print(f"  Backend:           {result.backend_id.upper()} 5.0")
+    print(f"  Runtime Target:    {result.runtime_label}")
+    if result.is_experimental:
+        print("  Notice:            Using an experimental preview runtime.")
+    compatibility = result.metadata.get("compatibility", {})
+    if compatibility.get("status"):
+        print(f"  Compatibility:     {compatibility['status']} (confidence {compatibility.get('confidence_score', 'n/a')})")
+    print(f"  Main Class:        {result.metadata.get('game', {}).get('main_class') or '(not detected)'}")
+    print(f"  Output Directory:  {result.output_directory}")
+    print(f"  Entry Point HTML:  {result.entry_html}")
+    if result.staged_dependencies:
+        print(f"  Dependencies ({len(result.staged_dependencies)}):")
+        for d in result.staged_dependencies:
+            print(f"    - {d.relative_path} -> {d.virtual_path} ({d.size_bytes:,} bytes)")
+    notes = result.metadata.get("notes", [])
+    if notes:
+        print("-" * 68)
+        print("  COMPATIBILITY NOTES:")
+        for note in notes:
+            print(f"    * {note}")
+    print("-" * 68)
+    print("  To preview the game locally, run:")
+    print(f"    provikom serve {result.output_directory} --port 8080")
+    print("=" * 68)
+    return 0
+
+
+def run_serve(args: argparse.Namespace) -> int:
+    target = Path(args.directory)
+    if not target.exists():
+        print(f"Error: Directory '{target}' does not exist.", file=sys.stderr)
+        return 1
+    if not target.is_dir():
+        print(f"Error: Path '{target}' is not a directory.", file=sys.stderr)
+        return 1
+
+    try:
+        run_server(target, port=args.port)
+    except Exception as e:
+        print(f"Server error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def run_batch(args: argparse.Namespace) -> int:
     target_dir = Path(args.target)
     if not target_dir.exists():
@@ -103,7 +190,6 @@ def run_batch(args: argparse.Namespace) -> int:
     if target_dir.is_dir():
         jars = sorted(list(target_dir.glob("*.jar")))
     elif target_dir.suffix.lower() == ".json":
-        # Check if games catalog JSON
         try:
             catalog = json.loads(target_dir.read_text(encoding="utf-8"))
             base_dir = target_dir.parent.parent / "games" if (target_dir.parent.parent / "games").exists() else target_dir.parent
@@ -148,7 +234,6 @@ def run_batch(args: argparse.Namespace) -> int:
         except Exception as e:
             print(f"    Failed: {e}", file=sys.stderr)
 
-    # Save summary JSON
     summary_file = out_dir / "summary.json"
     summary_file.write_text(json.dumps(summaries, indent=2), encoding="utf-8")
     print(f"\nBatch analysis complete. {len(summaries)} reports written to '{out_dir}'.")
@@ -166,8 +251,8 @@ def run_schema(args: argparse.Namespace) -> int:
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="provikom-converter",
-        description="Provikom Converter - Java Game-to-Web publishing and compatibility analysis tool.",
+        prog="provikom",
+        description="Provikom Converter - Java Game-to-Web publishing tool.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
@@ -178,6 +263,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     analyze_parser.add_argument("jar_path", help="Path to JAR file")
     analyze_parser.add_argument("--json", action="store_true", help="Output raw JSON report")
     analyze_parser.add_argument("-o", "--output", help="Write JSON report to destination file")
+
+    # build
+    build_parser = subparsers.add_parser("build", help="Build a playable web artifact directory")
+    build_parser.add_argument("jar_path", help="Path to input Java JAR archive")
+    build_parser.add_argument("--backend", default="cheerpj", choices=["cheerpj"], help="Target backend compiler or runtime (default: cheerpj)")
+    build_parser.add_argument("-o", "--output", required=True, help="Destination directory for generated web bundle")
+    build_parser.add_argument("--title", help="Custom game title (defaults to JAR basename)")
+    build_parser.add_argument("-f", "--force", action="store_true", help="Overwrite destination directory if it exists")
+
+    # serve
+    serve_parser = subparsers.add_parser("serve", help="Serve a web artifact with HTTP Range Request support")
+    serve_parser.add_argument("directory", help="Directory containing the built web artifact")
+    serve_parser.add_argument("-p", "--port", type=int, default=8080, help="Port to listen on (default: 8080)")
 
     # batch
     batch_parser = subparsers.add_parser("batch", help="Analyze multiple JAR archives")
@@ -194,6 +292,10 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.command == "analyze":
         return run_analyze(args)
+    elif args.command == "build":
+        return run_build(args)
+    elif args.command == "serve":
+        return run_serve(args)
     elif args.command == "batch":
         return run_batch(args)
     elif args.command == "schema":

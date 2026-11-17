@@ -35,7 +35,7 @@ class TestCLI(unittest.TestCase):
             with self.assertRaises(SystemExit) as cm:
                 main(["--version"])
             self.assertEqual(cm.exception.code, 0)
-            self.assertIn("provikom-converter", fake_out.getvalue())
+            self.assertIn("provikom", fake_out.getvalue())
 
     def test_cli_analyze_human(self):
         with patch("sys.stdout", new=io.StringIO()) as fake_out:
@@ -57,6 +57,34 @@ class TestCLI(unittest.TestCase):
     def test_cli_analyze_missing_file(self):
         with patch("sys.stderr", new=io.StringIO()):
             code = main(["analyze", "/path/to/nonexistent.jar"])
+            self.assertEqual(code, 1)
+
+    def test_cli_build_missing_file(self):
+        with patch("sys.stderr", new=io.StringIO()):
+            code = main(["build", "/path/to/nonexistent.jar", "-o", "/tmp/out"])
+            self.assertEqual(code, 1)
+
+    def test_cli_build_unsupported_bytecode(self):
+        future_jar = Path(self.temp_dir.name) / "future.jar"
+        class_bytes = create_minimal_class_bytes(
+            major_version=70,
+            this_class_name="com/example/FutureGame",
+        )
+        future_jar.write_bytes(
+            create_synthetic_jar(
+                manifest_lines=["Manifest-Version: 1.0", "Main-Class: com.example.FutureGame"],
+                classes=[("com/example/FutureGame.class", class_bytes)],
+            )
+        )
+        out = Path(self.temp_dir.name) / "future-out"
+        with patch("sys.stderr", new=io.StringIO()) as fake_err:
+            code = main(["build", str(future_jar), "-o", str(out)])
+            self.assertEqual(code, 1)
+            self.assertIn("Runtime Selection Error", fake_err.getvalue())
+
+    def test_cli_serve_missing_directory(self):
+        with patch("sys.stderr", new=io.StringIO()):
+            code = main(["serve", "/path/to/nonexistent-directory"])
             self.assertEqual(code, 1)
 
     def test_cli_schema(self):

@@ -1,4 +1,4 @@
-"""Orchestration pipeline coordinating analysis and report generation."""
+"""Orchestration pipeline coordinating analysis, report generation, and artifact building."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from provikom_converter.adapters import ALL_ADAPTERS, BuildOptions, BuildResult
 from provikom_converter.analyzer.archive import (
     ArchiveInventory,
     SafeArchiveReader,
@@ -31,7 +32,7 @@ class AnalysisResult:
 
 
 class ConverterPipeline:
-    """End-to-end coordinator for Java archive analysis and compatibility checks."""
+    """End-to-end coordinator for Java archive analysis, compatibility checks, and artifact building."""
 
     def analyze_jar(self, jar_path: str | Path) -> AnalysisResult:
         jar_path = Path(jar_path).resolve()
@@ -96,3 +97,29 @@ class ConverterPipeline:
             res = self.analyze_jar(p)
             results.append(res)
         return results
+
+    def build_artifact(
+        self,
+        jar_path: str | Path,
+        output_dir: str | Path,
+        backend: str = "cheerpj",
+        game_title: Optional[str] = None,
+        force_overwrite: bool = False,
+    ) -> BuildResult:
+        """Analyze archive and generate a playable web artifact directory."""
+        analysis = self.analyze_jar(jar_path)
+
+        adapter = ALL_ADAPTERS.get(backend.lower())
+        if not adapter:
+            valid_backends = list(ALL_ADAPTERS.keys())
+            raise ValueError(f"Unknown backend '{backend}'. Available backends: {valid_backends}")
+
+        options = BuildOptions(
+            output_directory=str(output_dir),
+            backend=backend.lower(),
+            game_title=game_title,
+            force_overwrite=force_overwrite,
+            source_jar_dir=str(Path(jar_path).resolve().parent),
+        )
+
+        return adapter.generate_artifact(analysis, options)

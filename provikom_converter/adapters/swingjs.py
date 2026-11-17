@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, List
 
 from provikom_converter.adapters.base import (
     BackendAdapter,
+    BuildOptions,
+    BuildResult,
     ConversionOptions,
     ConversionPlan,
     ConversionStep,
@@ -87,12 +89,19 @@ class SwingJSAdapter(BackendAdapter):
 
         return ConversionPlan(
             backend_id=self.backend_id,
-            is_feasible=True,  # Feasible via decompilation pipeline in Milestone 2
+            is_feasible=True,
             summary=eval_result.summary,
             steps=steps,
             required_tools=["cfr-decompiler", "java2script", "node"],
             estimated_difficulty="high",
         )
+
+    def generate_artifact(
+        self,
+        analysis_result: Any,
+        options: BuildOptions,
+    ) -> BuildResult:
+        raise NotImplementedError("SwingJS source transpilation artifact generation is scheduled for future milestones.")
 
     def get_runtime_dependencies(self) -> List[str]:
         return [

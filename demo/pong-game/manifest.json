@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-11-17T15:13:57Z",
+  "provikom_converter_version": "0.1.0",
+  "backend": "cheerpj",
+  "backend_display_name": "CheerpJ 5.0",
+  "runtime_version": 21,
+  "is_experimental": false,
+  "runtime": {
+    "version": 21,
+    "label": "Java 21 (LTS)",
+    "experimental": false,
+    "selection_reason": "Java 21 (LTS) bytecode (major 65) mapped to the Java 21 LTS runtime."
+  },
+  "entry_point": "index.html",
+  "jar_file": "PongGame.jar",
+  "java_major_version": 65,
+  "game": {
+    "title": "Pong Game",
+    "jar_file": "PongGame.jar",
+    "sha256": "8439144321d270bf7f50aad2ccda026223fd27a19c388ff90c81731dd9bd6b5b",
+    "size_bytes": 47670,
+    "main_class": "ucupandriska.ponggame.Main",
+    "entry_point_source": "manifest",
+    "entry_point_candidates": [],
+    "java_major_version": 65,
+    "java_version": "Java 21 (LTS)",
+    "has_audio": true,
+    "gui_apis": [
+      "Java AWT",
+      "Java Swing"
+    ],
+    "audio_apis": [
+      "Java Sound Sampled (javax.sound.sampled)"
+    ]
+  },
+  "compatibility": {
+    "status": "supported_with_workarounds",
+    "summary": "CheerpJ can run this game provided external dependencies or virtual filesystem assets are staged.",
+    "confidence_score": 0.9,
+    "verified_capabilities": [
+      "Accepts compiled binary JAR input directly without source code.",
+      "Bytecode major version 65 (Java 21 (LTS)) is supported by CheerpJ 5.0 runtime.",
+      "CheerpJ provides client-side OpenJDK AWT/Swing canvas rendering."
+    ],
+    "assumptions_and_risks": [
+      "Browser audio autoplay policy requires user interaction before audio starts."
+    ],
+    "blockers": [],
+    "workarounds_needed": [
+      "Ensure game startup waits for user click or initialize Web Audio context on user gesture."
+    ],
+    "remediation_steps": []
+  },
+  "paths": {
+    "web_root": "/",
+    "virtual_mount_root": "/app/",
+    "main_jar": "PongGame.jar",
+    "main_jar_virtual_path": "/app/PongGame.jar",
+    "class_path": [
+      "/app/PongGame.jar"
+    ]
+  },
+  "dependencies": [],
+  "notes": [
+    "Audio requires a browser user gesture. Some javax.sound.sampled / Clip formats may be unsupported by the browser backend.",
+    "Ensure game startup waits for user click or initialize Web Audio context on user gesture.",
+    "Browser audio autoplay policy requires user interaction before audio starts."
+  ],
+  "generated_files": [
+    "index.html",
+    "style.css",
+    "app.js",
+    "manifest.json",
+    "PongGame.jar"
+  ]
+}
