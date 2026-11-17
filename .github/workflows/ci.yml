@@ -21,7 +21,7 @@ env:
 jobs:
   python-tests:
     name: Python ${{ matrix.python-version }} tests, security, artifacts, and HTTP Range
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -76,7 +76,7 @@ jobs:
 
   browser-smoke:
     name: Playwright Chromium smoke verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout converter
