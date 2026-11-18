@@ -1,6 +1,6 @@
 # Provikom Converter
 
-[![Test Suite](https://img.shields.io/badge/tests-93%20passed-brightgreen.svg)]()
+[![Test Suite](https://img.shields.io/badge/tests-97%20passed-brightgreen.svg)]()
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)]()
 
@@ -36,7 +36,8 @@
 - **Safe, Transactional Builds (Milestone 2B)**:
   - `--force` replacements are built in a temporary sibling directory and published only after a successful build.
   - Existing artifacts survive failed force rebuilds.
-  - Output paths are rejected when they are the source JAR, its parent, an ancestor, a filesystem root, or a symlink.
+  - Output paths are rejected when they are the source JAR, its parent, an ancestor, a filesystem root, a symlink, or contain parent-directory traversal.
+  - Non-empty directories without a Provikom artifact manifest are never deleted, even with `--force`.
 - **Honest Lifecycle Tracking (Milestone 2B)**:
   - States distinguish static analysis (`analyzed`), artifact generation (`built`), and execution evidence (`runtime_verified`, `failed`).
   - A mounted canvas or successful build is never reported as runtime verification.
@@ -278,8 +279,8 @@ python3 -m unittest discover -s tests -v
 ```
 
 Expected results:
-- Core suite without browser execution: **87 tests**, with the four browser classes skipped.
-- Full suite with Playwright and fixtures: **93 tests**, 0 failures, 0 skips.
+- Core suite without browser execution: **91 tests**, with the four browser classes skipped.
+- Full suite with Playwright and fixtures: **97 tests**, 0 failures, 0 skips.
 
 `PROVIKOM_REQUIRE_FIXTURES=1` and `PROVIKOM_REQUIRE_BROWSER=1` make missing fixtures, browser dependencies, or CDN access fatal. CI uses these flags so verification cannot silently degrade.
 

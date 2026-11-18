@@ -9,12 +9,13 @@ build never destroys the previous artifact.
 
 from __future__ import annotations
 
+import json
 import shutil
 import tempfile
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Tuple, Union
+from typing import Dict, Iterator, Tuple, Union
 
 
 class BuildPathError(ValueError):
@@ -34,6 +35,14 @@ def _reject_existing_symlink(path: Path, label: str) -> None:
         )
 
 
+def _reject_path_traversal(path: Path) -> None:
+    if any(part == ".." for part in path.parts):
+        raise BuildPathError(
+            f"Refusing to use output path '{path}': parent-directory traversal "
+            "is not allowed. Pass a normalized output path instead."
+        )
+
+
 def validate_output_directory(
     source_jar_path: Union[str, Path],
     output_directory: Union[str, Path],
@@ -49,6 +58,9 @@ def validate_output_directory(
         raise BuildPathError(f"Input archive does not exist or is not a file: {source}")
 
     raw_output = Path(output_directory).expanduser()
+    _reject_path_traversal(raw_output)
+    # Validate the caller's raw path before resolving it. Resolving first would
+    # hide a symlinked output directory and bypass this rejection.
     _reject_existing_symlink(raw_output, "output directory")
     output = _resolve(raw_output)
 
@@ -98,27 +110,70 @@ def _target_is_empty(directory: Path) -> bool:
     return False
 
 
+def _read_artifact_manifest(directory: Path) -> Dict:
+    manifest_path = directory / "manifest.json"
+    if manifest_path.is_symlink() or not manifest_path.is_file():
+        return {}
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _is_provikom_artifact(directory: Path) -> bool:
+    """Return True only for a directory that carries a Provikom build manifest.
+
+    ``--force`` must never wipe an arbitrary non-empty directory. The manifest
+    marker is intentionally stricter than checking for index.html or app.js,
+    because those names are common in unrelated web projects.
+    """
+    data = _read_artifact_manifest(directory)
+    return (
+        isinstance(data.get("provikom_converter_version"), str)
+        and data.get("backend") in {"cheerpj", "teavm", "swingjs"}
+        and data.get("entry_point") == "index.html"
+    )
+
+
+def _check_replaceable_target(target_dir: Path, force_overwrite: bool) -> None:
+    """Validate an existing output directory before it can be replaced.
+
+    Empty directories and recognized Provikom artifacts may be replaced. Any
+    other non-empty directory is treated as unrelated user data and is never
+    deleted, even with ``--force``.
+    """
+    _reject_existing_symlink(target_dir, "output directory")
+    if not target_dir.exists():
+        return
+    if not target_dir.is_dir():
+        raise FileExistsError(
+            f"Destination path '{target_dir}' exists and is not a directory."
+        )
+    if _target_is_empty(target_dir):
+        return
+    if not force_overwrite:
+        raise FileExistsError(
+            f"Destination directory '{target_dir}' already exists and is not empty. "
+            "Use --force to overwrite."
+        )
+    if not _is_provikom_artifact(target_dir):
+        raise BuildPathError(
+            f"Refusing to overwrite '{target_dir}': it is non-empty and does not "
+            "contain a Provikom artifact manifest. Move or remove unrelated data "
+            "explicitly before using --force."
+        )
+
+
 def _publish(temp_dir: Path, target_dir: Path, force_overwrite: bool) -> None:
     """Atomically move a completed build into place, preserving old artifacts."""
     backup_dir = None
 
+    _check_replaceable_target(target_dir, force_overwrite)
     if target_dir.exists():
-        if target_dir.is_symlink():
-            raise BuildPathError(
-                f"Refusing to replace symlinked output directory '{target_dir}'."
-            )
-        if not target_dir.is_dir():
-            raise FileExistsError(
-                f"Destination path '{target_dir}' exists and is not a directory."
-            )
         if _target_is_empty(target_dir):
             target_dir.rmdir()
         else:
-            if not force_overwrite:
-                raise FileExistsError(
-                    f"Destination directory '{target_dir}' already exists and is not empty. "
-                    "Use --force to overwrite."
-                )
             backup_dir = target_dir.parent / (
                 f".{target_dir.name}.provikom-backup-{uuid.uuid4().hex}"
             )
@@ -154,17 +209,7 @@ def atomic_output_directory(
     parent = target_dir.parent
     parent.mkdir(parents=True, exist_ok=True)
 
-    if target_dir.exists():
-        _reject_existing_symlink(target_dir, "output directory")
-        if not target_dir.is_dir():
-            raise FileExistsError(
-                f"Destination path '{target_dir}' exists and is not a directory."
-            )
-        if not _target_is_empty(target_dir) and not force_overwrite:
-            raise FileExistsError(
-                f"Destination directory '{target_dir}' already exists and is not empty. "
-                "Use --force to overwrite."
-            )
+    _check_replaceable_target(target_dir, force_overwrite)
 
     temp_dir = Path(
         tempfile.mkdtemp(prefix=f".{target_dir.name}.provikom-tmp-", dir=str(parent))

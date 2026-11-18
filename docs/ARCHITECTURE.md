@@ -271,14 +271,16 @@ The player:
 
 ```text
 validate source/output relationship
+  -> reject parent-directory traversal
   -> reject source JAR, source parent, source ancestors, filesystem roots, and symlinks
+  -> require non-empty existing targets to carry a Provikom manifest
   -> create temporary sibling directory
   -> generate artifact
   -> atomically rename temporary directory into place
   -> preserve previous artifact on failure
 ```
 
-Existing artifacts are renamed to a backup only after the new build has completed. If publishing fails, the backup is restored. Temporary directories are removed on both success and failure paths.
+The adapter passes the caller's raw output path into the safety layer; it does not call `resolve()` first, because resolving a symlink before validation would hide the symlink and bypass rejection. Existing artifacts are renamed to a backup only after the new build has completed. If publishing fails, the backup is restored. Temporary directories are removed on both success and failure paths.
 
 ### 8.7 Lifecycle and Verification Evidence
 

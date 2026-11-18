@@ -270,7 +270,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     build_parser.add_argument("--backend", default="cheerpj", choices=["cheerpj"], help="Target backend compiler or runtime (default: cheerpj)")
     build_parser.add_argument("-o", "--output", required=True, help="Destination directory for generated web bundle")
     build_parser.add_argument("--title", help="Custom game title (defaults to JAR basename)")
-    build_parser.add_argument("-f", "--force", action="store_true", help="Overwrite destination directory if it exists")
+    build_parser.add_argument("-f", "--force", action="store_true", help="Replace an existing Provikom artifact directory (unrelated data is refused)")
 
     # serve
     serve_parser = subparsers.add_parser("serve", help="Serve a web artifact with HTTP Range Request support")

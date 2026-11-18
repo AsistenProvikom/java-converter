@@ -56,6 +56,10 @@ class TestOutputPathValidation(unittest.TestCase):
         with self.assertRaises(BuildPathError):
             validate_output_directory(self.jar, Path("/"))
 
+    def test_parent_directory_traversal_is_rejected(self):
+        with self.assertRaises(BuildPathError):
+            validate_output_directory(self.jar, self.jar.parent / ".." / "dist")
+
     def test_symlink_output_is_rejected(self):
         real = self.tmp / "real-output"
         real.mkdir()
@@ -123,6 +127,44 @@ class TestTransactionalBuilds(unittest.TestCase):
 
         self.assertTrue((self.out / "index.html").is_file())
         self.assertEqual(marker.read_text(encoding="utf-8"), "keep me")
+
+    def test_pipeline_rejects_symlinked_output_before_resolution(self):
+        real_output = self.tmp / "real-output"
+        real_output.mkdir()
+        important = real_output / "important.txt"
+        important.write_text("do not delete", encoding="utf-8")
+        linked_output = self.tmp / "linked-output"
+        linked_output.symlink_to(real_output, target_is_directory=True)
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, linked_output, force_overwrite=True
+            )
+
+        self.assertEqual(important.read_text(encoding="utf-8"), "do not delete")
+        self.assertTrue(linked_output.is_symlink())
+        self.assertFalse((real_output / "index.html").exists())
+
+    def test_pipeline_refuses_force_overwrite_of_unrelated_directory(self):
+        self.out.mkdir()
+        important = self.out / "important.txt"
+        important.write_text("do not delete", encoding="utf-8")
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, self.out, force_overwrite=True
+            )
+
+        self.assertEqual(important.read_text(encoding="utf-8"), "do not delete")
+        self.assertFalse((self.out / "index.html").exists())
+
+    def test_pipeline_rejects_traversal_output(self):
+        traversal_output = self.jar.parent / ".." / "artifact"
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(self.jar, traversal_output)
+
+        self.assertFalse((self.tmp / "artifact").exists())
 
     def test_failed_build_does_not_leave_temporary_directories(self):
         pipeline = ConverterPipeline()

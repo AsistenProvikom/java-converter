@@ -216,7 +216,7 @@ class TestOverwriteAndErrors(unittest.TestCase):
         _require(PONG_JAR)
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "artifact"
-            out.mkdir()
+            ConverterPipeline().build_artifact(jar_path=PONG_JAR, output_dir=out)
             (out / "stale.txt").write_text("old", encoding="utf-8")
             ConverterPipeline().build_artifact(
                 jar_path=PONG_JAR, output_dir=out, force_overwrite=True

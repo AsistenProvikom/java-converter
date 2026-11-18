@@ -31,7 +31,10 @@ from provikom_converter.analyzer.compatibility import (
 )
 from provikom_converter.analyzer.rules import AnalysisFeatures
 from provikom_converter.artifacts.report import calculate_sha256
-from provikom_converter.build_safety import atomic_output_directory
+from provikom_converter.build_safety import (
+    atomic_output_directory,
+    validate_output_directory,
+)
 from provikom_converter.lifecycle import built_artifact_lifecycle
 from provikom_converter.version import __version__
 
@@ -1115,11 +1118,18 @@ class CheerpJAdapter(BackendAdapter):
     ) -> BuildResult:
         """Produce a complete, self-contained CheerpJ 5.0 static web artifact."""
         source_jar_path = Path(analysis_result.target_path).resolve()
-        final_output_dir = Path(options.output_directory).expanduser().resolve()
+        raw_output_dir = Path(options.output_directory).expanduser()
+
+        # Validate the raw caller path before any resolve() call. Resolving here
+        # first would follow a symlinked output directory and hide it from the
+        # symlink rejection in build_safety.
+        _validated_source, final_output_dir = validate_output_directory(
+            source_jar_path, raw_output_dir
+        )
 
         with atomic_output_directory(
             source_jar_path=source_jar_path,
-            output_directory=final_output_dir,
+            output_directory=raw_output_dir,
             force_overwrite=options.force_overwrite,
         ) as build_dir:
             return self._generate_artifact_into(
