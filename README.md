@@ -1,6 +1,6 @@
 # Provikom Converter
 
-[![Test Suite](https://img.shields.io/badge/tests-93%20passed-brightgreen.svg)]()
+[![Test Suite](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)]()
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)]()
 
@@ -36,7 +36,8 @@
 - **Safe, Transactional Builds (Milestone 2B)**:
   - `--force` replacements are built in a temporary sibling directory and published only after a successful build.
   - Existing artifacts survive failed force rebuilds.
-  - Output paths are rejected when they are the source JAR, its parent, an ancestor, a filesystem root, or a symlink.
+  - Output paths are rejected when they are the source JAR, its parent, an ancestor, a filesystem root, contain parent-directory traversal, or have a symlink at any existing path component.
+  - Non-empty directories are never deleted with `--force` unless they contain a valid Provikom ownership marker and matching manifest, or a verifiable legacy artifact (matching JAR hash and generated player files).
 - **Honest Lifecycle Tracking (Milestone 2B)**:
   - States distinguish static analysis (`analyzed`), artifact generation (`built`), and execution evidence (`runtime_verified`, `failed`).
   - A mounted canvas or successful build is never reported as runtime verification.
@@ -92,7 +93,7 @@ python3 -m provikom_converter build /path/to/game.jar \
   --output ./demo/game
 ```
 
-Use `--force` to replace an existing non-empty output directory, and `--title` to override the detected game title. Forced rebuilds are transactional: the previous artifact is replaced only after the new build succeeds.
+Use `--force` to replace an existing Provikom artifact, and `--title` to override the detected game title. Unrelated non-empty directories are always refused. Forced rebuilds are transactional: the previous artifact is replaced only after the new build succeeds.
 
 The output is a self-contained static player directory:
 
@@ -102,6 +103,7 @@ game/
 ├── style.css
 ├── app.js
 ├── manifest.json
+├── .provikom-artifact.json  # ownership marker
 ├── Game.jar
 ├── verification.json  # optional runtime evidence
 └── lib/               # staged Class-Path dependencies, when present
@@ -193,7 +195,8 @@ Evidence records:
 - Untrusted game bytecode is never executed on the host or CI runner during analysis.
 - JARs are copied unchanged into generated artifacts.
 - Archive traversal, zip bombs, excessive entry counts, and abnormal compression ratios remain guarded.
-- Forced output replacement validates source/output relationships and existing symlinks before deleting anything.
+- Forced output replacement validates source/output relationships and rejects symlinks in every existing output path component before deleting anything.
+- Artifact ownership is proven with a marker bound to the manifest hash; legacy artifacts must match their staged JAR hash and generated player files. A manifest containing plausible JSON fields alone is not sufficient.
 - Browser verification executes game code only inside headless Chromium on ephemeral GitHub-hosted runners.
 - CI uses `contents: read`, disables persisted checkout credentials, and checks out a pinned `project-2024` commit for fixtures.
 - Do not run untrusted pull requests on privileged self-hosted runners with internal network access.
@@ -278,8 +281,8 @@ python3 -m unittest discover -s tests -v
 ```
 
 Expected results:
-- Core suite without browser execution: **87 tests**, with the four browser classes skipped.
-- Full suite with Playwright and fixtures: **93 tests**, 0 failures, 0 skips.
+- Core suite without browser execution: **99 tests**, with the four browser classes skipped.
+- Full suite with Playwright and fixtures: **105 tests**, 0 failures, 0 skips.
 
 `PROVIKOM_REQUIRE_FIXTURES=1` and `PROVIKOM_REQUIRE_BROWSER=1` make missing fixtures, browser dependencies, or CDN access fatal. CI uses these flags so verification cannot silently degrade.
 

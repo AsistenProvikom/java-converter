@@ -7,6 +7,7 @@ import json
 import posixpath
 import re
 import shutil
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -31,7 +32,12 @@ from provikom_converter.analyzer.compatibility import (
 )
 from provikom_converter.analyzer.rules import AnalysisFeatures
 from provikom_converter.artifacts.report import calculate_sha256
-from provikom_converter.build_safety import atomic_output_directory
+from provikom_converter.build_safety import (
+    OWNERSHIP_MARKER_FILENAME,
+    atomic_output_directory,
+    refresh_ownership_marker,
+    validate_output_directory,
+)
 from provikom_converter.lifecycle import built_artifact_lifecycle
 from provikom_converter.version import __version__
 
@@ -1115,11 +1121,18 @@ class CheerpJAdapter(BackendAdapter):
     ) -> BuildResult:
         """Produce a complete, self-contained CheerpJ 5.0 static web artifact."""
         source_jar_path = Path(analysis_result.target_path).resolve()
-        final_output_dir = Path(options.output_directory).expanduser().resolve()
+        raw_output_dir = Path(options.output_directory).expanduser()
+
+        # Validate the raw caller path before any resolve() call. Resolving here
+        # first would follow a symlinked output directory and hide it from the
+        # symlink rejection in build_safety.
+        _validated_source, final_output_dir = validate_output_directory(
+            source_jar_path, raw_output_dir
+        )
 
         with atomic_output_directory(
             source_jar_path=source_jar_path,
-            output_directory=final_output_dir,
+            output_directory=raw_output_dir,
             force_overwrite=options.force_overwrite,
         ) as build_dir:
             return self._generate_artifact_into(
@@ -1207,6 +1220,7 @@ class CheerpJAdapter(BackendAdapter):
             "style.css",
             "app.js",
             "manifest.json",
+            OWNERSHIP_MARKER_FILENAME,
             source_jar_path.name,
         ] + [dep.relative_path for dep in staged_deps]
 
@@ -1260,10 +1274,17 @@ class CheerpJAdapter(BackendAdapter):
             "dependencies": dependency_records,
             "notes": notes,
             "generated_files": generated_files,
+            "ownership": {
+                "owner": "provikom-converter",
+                "artifact_id": uuid.uuid4().hex,
+                "marker": OWNERSHIP_MARKER_FILENAME,
+            },
         }
 
         manifest_file = out_dir / "manifest.json"
         manifest_file.write_text(json.dumps(manifest_data, indent=2), encoding="utf-8")
+        if not refresh_ownership_marker(out_dir):
+            raise RuntimeError("Failed to write artifact ownership marker")
 
         return BuildResult(
             backend_id=self.backend_id,

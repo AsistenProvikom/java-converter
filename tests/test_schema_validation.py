@@ -30,6 +30,8 @@ class TestSchemaValidation(unittest.TestCase):
         self.assertEqual(manifest_schema["$id"], "https://provikom.org/schema/v1/artifact-manifest.json")
         # Version 1.0 manifests remain valid without a lifecycle block.
         self.assertNotIn("lifecycle", manifest_schema["required"])
+        self.assertIn("ownership", manifest_schema["properties"])
+        self.assertNotIn("ownership", manifest_schema["required"])
         conditionals = manifest_schema["allOf"]
         self.assertEqual(conditionals[0]["if"]["properties"]["schema_version"]["const"], "1.1")
         self.assertIn("lifecycle", conditionals[0]["then"]["required"])
