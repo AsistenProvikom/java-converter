@@ -215,6 +215,7 @@ Only `CheerpJAdapter` implements `generate_artifact()` in Milestone 2A. `TeaVMAd
 ├── style.css           # Responsive player layout
 ├── app.js              # CheerpJ runtime controller
 ├── manifest.json       # Build metadata and compatibility record
+├── .provikom-artifact.json  # Ownership marker bound to manifest hash
 ├── <Game>.jar          # Unmodified input archive
 └── lib/                # Staged manifest Class-Path dependencies
 ```
@@ -272,15 +273,19 @@ The player:
 ```text
 validate source/output relationship
   -> reject parent-directory traversal
-  -> reject source JAR, source parent, source ancestors, filesystem roots, and symlinks
-  -> require non-empty existing targets to carry a Provikom manifest
+  -> reject source JAR, source parent, source ancestors, and filesystem roots
+  -> reject a symlink at every existing output path component
+  -> require non-empty existing targets to prove Provikom ownership
   -> create temporary sibling directory
-  -> generate artifact
+  -> generate artifact and ownership marker
+  -> revalidate output path components
   -> atomically rename temporary directory into place
   -> preserve previous artifact on failure
 ```
 
 The adapter passes the caller's raw output path into the safety layer; it does not call `resolve()` first, because resolving a symlink before validation would hide the symlink and bypass rejection. Existing artifacts are renamed to a backup only after the new build has completed. If publishing fails, the backup is restored. Temporary directories are removed on both success and failure paths.
+
+Ownership is not inferred from manifest fields alone. New artifacts contain `.provikom-artifact.json`, which records the owner, artifact ID, and SHA-256 of `manifest.json`; the manifest records the same artifact ID. A tampered manifest or marker invalidates ownership. Legacy artifacts without a marker are accepted only when their staged JAR hash and generated CheerpJ player files match the manifest. Verification updates refresh the marker after intentionally rewriting the manifest lifecycle block.
 
 ### 8.7 Lifecycle and Verification Evidence
 

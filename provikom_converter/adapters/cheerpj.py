@@ -7,6 +7,7 @@ import json
 import posixpath
 import re
 import shutil
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -32,7 +33,9 @@ from provikom_converter.analyzer.compatibility import (
 from provikom_converter.analyzer.rules import AnalysisFeatures
 from provikom_converter.artifacts.report import calculate_sha256
 from provikom_converter.build_safety import (
+    OWNERSHIP_MARKER_FILENAME,
     atomic_output_directory,
+    refresh_ownership_marker,
     validate_output_directory,
 )
 from provikom_converter.lifecycle import built_artifact_lifecycle
@@ -1217,6 +1220,7 @@ class CheerpJAdapter(BackendAdapter):
             "style.css",
             "app.js",
             "manifest.json",
+            OWNERSHIP_MARKER_FILENAME,
             source_jar_path.name,
         ] + [dep.relative_path for dep in staged_deps]
 
@@ -1270,10 +1274,17 @@ class CheerpJAdapter(BackendAdapter):
             "dependencies": dependency_records,
             "notes": notes,
             "generated_files": generated_files,
+            "ownership": {
+                "owner": "provikom-converter",
+                "artifact_id": uuid.uuid4().hex,
+                "marker": OWNERSHIP_MARKER_FILENAME,
+            },
         }
 
         manifest_file = out_dir / "manifest.json"
         manifest_file.write_text(json.dumps(manifest_data, indent=2), encoding="utf-8")
+        if not refresh_ownership_marker(out_dir):
+            raise RuntimeError("Failed to write artifact ownership marker")
 
         return BuildResult(
             backend_id=self.backend_id,

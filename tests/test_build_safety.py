@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,9 +11,14 @@ from typing import Optional
 
 from provikom_converter.adapters.base import MissingDependencyError
 from provikom_converter.build_safety import (
+    OWNERSHIP_MARKER_FILENAME,
     BuildPathError,
     atomic_output_directory,
     validate_output_directory,
+)
+from provikom_converter.lifecycle import (
+    apply_verification_to_manifest,
+    make_verification_record,
 )
 from provikom_converter.orchestration.pipeline import ConverterPipeline
 from tests.fixtures import create_minimal_class_bytes, create_synthetic_jar
@@ -79,6 +86,19 @@ class TestOutputPathValidation(unittest.TestCase):
         link.symlink_to(self.tmp / "missing-target", target_is_directory=True)
         with self.assertRaises(BuildPathError):
             validate_output_directory(self.jar, link)
+
+    def test_symlinked_parent_component_is_rejected(self):
+        real_parent = self.tmp / "real-parent"
+        real_parent.mkdir()
+        linked_parent = self.tmp / "linked-parent"
+        linked_parent.symlink_to(real_parent, target_is_directory=True)
+
+        with self.assertRaises(BuildPathError):
+            validate_output_directory(
+                self.jar, linked_parent / "nested" / "artifact"
+            )
+
+        self.assertFalse((real_parent / "nested" / "artifact").exists())
 
     def test_output_inside_source_directory_is_allowed(self):
         source, output = validate_output_directory(self.jar, self.jar.parent / "dist")
@@ -157,6 +177,162 @@ class TestTransactionalBuilds(unittest.TestCase):
 
         self.assertEqual(important.read_text(encoding="utf-8"), "do not delete")
         self.assertFalse((self.out / "index.html").exists())
+
+    def test_pipeline_rejects_symlinked_parent_component(self):
+        real_parent = self.tmp / "real-parent"
+        real_parent.mkdir()
+        linked_parent = self.tmp / "linked-parent"
+        linked_parent.symlink_to(real_parent, target_is_directory=True)
+        output = linked_parent / "nested" / "artifact"
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, output, force_overwrite=True
+            )
+
+        self.assertTrue(linked_parent.is_symlink())
+        self.assertFalse((real_parent / "nested" / "artifact").exists())
+
+    def test_pipeline_rejects_manifest_fields_without_ownership_proof(self):
+        self.out.mkdir()
+        important = self.out / "important.txt"
+        important.write_text("do not delete", encoding="utf-8")
+        spoofed = {
+            "schema_version": "1.1",
+            "provikom_converter_version": "9.9.9",
+            "backend": "cheerpj",
+            "entry_point": "index.html",
+            "generated_files": [
+                "manifest.json",
+                "index.html",
+                "app.js",
+                "style.css",
+            ],
+        }
+        (self.out / "manifest.json").write_text(
+            json.dumps(spoofed), encoding="utf-8"
+        )
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, self.out, force_overwrite=True
+            )
+
+        self.assertEqual(important.read_text(encoding="utf-8"), "do not delete")
+        self.assertFalse((self.out / "index.html").exists())
+
+    def test_pipeline_rejects_spoofed_manifest_with_lookalike_files(self):
+        self.out.mkdir()
+        important = self.out / "important.txt"
+        important.write_text("do not delete", encoding="utf-8")
+        staged_jar = self.out / "game.jar"
+        staged_jar.write_bytes(self.jar.read_bytes())
+        (self.out / "index.html").write_text(
+            '<div id="cheerpj-display"></div>', encoding="utf-8"
+        )
+        (self.out / "app.js").write_text(
+            "async function boot() { await cheerpjInit(); }", encoding="utf-8"
+        )
+        (self.out / "style.css").write_text("body {}", encoding="utf-8")
+        spoofed = {
+            "schema_version": "1.1",
+            "provikom_converter_version": "9.9.9",
+            "backend": "cheerpj",
+            "entry_point": "index.html",
+            "jar_file": staged_jar.name,
+            "game": {
+                "sha256": hashlib.sha256(staged_jar.read_bytes()).hexdigest(),
+                "size_bytes": staged_jar.stat().st_size,
+            },
+            "generated_files": [
+                "manifest.json",
+                "index.html",
+                "app.js",
+                "style.css",
+                staged_jar.name,
+            ],
+        }
+        (self.out / "manifest.json").write_text(
+            json.dumps(spoofed), encoding="utf-8"
+        )
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, self.out, force_overwrite=True
+            )
+
+        self.assertEqual(important.read_text(encoding="utf-8"), "do not delete")
+        self.assertFalse((self.out / OWNERSHIP_MARKER_FILENAME).exists())
+
+    def test_tampered_manifest_invalidates_ownership_marker(self):
+        ConverterPipeline().build_artifact(self.jar, self.out)
+        manifest_path = self.out / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["game"]["title"] = "Tampered"
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, self.out, force_overwrite=True
+            )
+
+        self.assertTrue((self.out / "index.html").is_file())
+        self.assertTrue((self.out / OWNERSHIP_MARKER_FILENAME).is_file())
+
+    def test_tampered_ownership_marker_is_rejected(self):
+        ConverterPipeline().build_artifact(self.jar, self.out)
+        marker_path = self.out / OWNERSHIP_MARKER_FILENAME
+        marker = json.loads(marker_path.read_text(encoding="utf-8"))
+        marker["manifest_sha256"] = "0" * 64
+        marker_path.write_text(json.dumps(marker, indent=2), encoding="utf-8")
+
+        with self.assertRaises(BuildPathError):
+            ConverterPipeline().build_artifact(
+                self.jar, self.out, force_overwrite=True
+            )
+
+        self.assertTrue((self.out / "index.html").is_file())
+
+    def test_legacy_artifact_without_marker_can_still_be_force_rebuilt(self):
+        ConverterPipeline().build_artifact(self.jar, self.out)
+        manifest_path = self.out / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest.pop("ownership", None)
+        manifest["generated_files"] = [
+            name
+            for name in manifest["generated_files"]
+            if name != OWNERSHIP_MARKER_FILENAME
+        ]
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        (self.out / OWNERSHIP_MARKER_FILENAME).unlink()
+
+        ConverterPipeline().build_artifact(
+            self.jar, self.out, force_overwrite=True
+        )
+
+        self.assertTrue((self.out / "index.html").is_file())
+        self.assertTrue((self.out / OWNERSHIP_MARKER_FILENAME).is_file())
+
+    def test_verified_artifact_can_still_be_force_rebuilt(self):
+        ConverterPipeline().build_artifact(self.jar, self.out)
+        record = make_verification_record(
+            game="Example",
+            artifact=str(self.out),
+            state="runtime_verified",
+            checks=[{"name": "render", "passed": True}],
+        )
+        apply_verification_to_manifest(self.out, record)
+
+        ConverterPipeline().build_artifact(
+            self.jar, self.out, force_overwrite=True
+        )
+
+        self.assertTrue((self.out / "index.html").is_file())
+        manifest = json.loads(
+            (self.out / "manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(manifest["lifecycle"]["state"], "built")
+        self.assertFalse((self.out / "verification.json").exists())
 
     def test_pipeline_rejects_traversal_output(self):
         traversal_output = self.jar.parent / ".." / "artifact"

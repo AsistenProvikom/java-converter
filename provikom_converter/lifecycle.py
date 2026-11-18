@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Union
 
+from provikom_converter.build_safety import refresh_ownership_marker
+
 LIFECYCLE_STATES = (
     "analyzed",
     "candidate",
@@ -157,5 +159,6 @@ def apply_verification_to_manifest(
         generated.append("verification.json")
 
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    refresh_ownership_marker(directory)
     write_verification_record(directory, record)
     return manifest
