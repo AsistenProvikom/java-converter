@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from provikom_converter.adapters import ALL_ADAPTERS, BuildOptions, BuildResult
 from provikom_converter.analyzer.archive import (
@@ -34,7 +34,7 @@ class AnalysisResult:
 class ConverterPipeline:
     """End-to-end coordinator for Java archive analysis, compatibility checks, and artifact building."""
 
-    def analyze_jar(self, jar_path: str | Path) -> AnalysisResult:
+    def analyze_jar(self, jar_path: Union[str, Path]) -> AnalysisResult:
         jar_path = Path(jar_path).resolve()
         if not jar_path.exists():
             raise FileNotFoundError(f"File not found: {jar_path}")
@@ -91,7 +91,7 @@ class ConverterPipeline:
             report=report,
         )
 
-    def analyze_batch(self, jar_paths: List[str | Path]) -> List[AnalysisResult]:
+    def analyze_batch(self, jar_paths: List[Union[str, Path]]) -> List[AnalysisResult]:
         results: List[AnalysisResult] = []
         for p in jar_paths:
             res = self.analyze_jar(p)
@@ -100,8 +100,8 @@ class ConverterPipeline:
 
     def build_artifact(
         self,
-        jar_path: str | Path,
-        output_dir: str | Path,
+        jar_path: Union[str, Path],
+        output_dir: Union[str, Path],
         backend: str = "cheerpj",
         game_title: Optional[str] = None,
         force_overwrite: bool = False,

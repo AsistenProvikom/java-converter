@@ -5,9 +5,27 @@ from __future__ import annotations
 import io
 import os
 import struct
+import unittest
 import zipfile
 from pathlib import Path
 from typing import List, Optional, Tuple
+
+
+def strict_fixtures_enabled() -> bool:
+    """Return True when missing fixtures must fail instead of skip (CI mode)."""
+    return os.environ.get("PROVIKOM_REQUIRE_FIXTURES", "").strip() == "1"
+
+
+def require_fixture(path: Path, label: str = "fixture") -> None:
+    """Require a fixture file, failing in CI and skipping locally when absent."""
+    if path.is_file():
+        return
+    message = f"Required {label} not available: {path}"
+    if strict_fixtures_enabled():
+        raise FileNotFoundError(
+            message + ". PROVIKOM_REQUIRE_FIXTURES=1 makes missing fixtures fatal."
+        )
+    raise unittest.SkipTest(message)
 
 
 def find_project2024_games_dir() -> Path:

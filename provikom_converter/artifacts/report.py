@@ -15,6 +15,7 @@ from provikom_converter.analyzer.bytecode import (
 )
 from provikom_converter.analyzer.compatibility import BackendEvaluation
 from provikom_converter.analyzer.rules import AnalysisFeatures, DetectedFeature
+from provikom_converter.lifecycle import static_analysis_lifecycle
 from provikom_converter.version import __version__
 
 
@@ -69,6 +70,15 @@ class RecommendationData:
 
 
 @dataclass
+class LifecycleData:
+    state: str
+    prediction_only: bool
+    execution_verified: bool
+    source: str
+    verification: Dict[str, Any]
+
+
+@dataclass
 class CompatibilityReport:
     schema_version: str
     metadata: ReportMetadata
@@ -78,6 +88,7 @@ class CompatibilityReport:
     features_detected: Dict[str, List[Dict[str, Any]]]
     backend_compatibility: Dict[str, Dict[str, Any]]
     recommendation: RecommendationData
+    lifecycle: LifecycleData
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -206,4 +217,5 @@ def build_report(
         features_detected=feat_dict,
         backend_compatibility=backends_dict,
         recommendation=rec,
+        lifecycle=LifecycleData(**static_analysis_lifecycle()),
     )

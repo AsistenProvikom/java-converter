@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://provikom.org/schema/v1/artifact-manifest.json",
+  "title": "ProvikomArtifactManifest",
+  "description": "Build manifest for a generated Provikom web artifact. Version 1.1 adds an additive lifecycle block; version 1.0 manifests remain readable when the block is absent.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "backend",
+    "runtime_version",
+    "entry_point",
+    "jar_file",
+    "java_major_version",
+    "game",
+    "compatibility",
+    "paths",
+    "dependencies",
+    "notes",
+    "generated_files"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "schema_version": { "const": "1.1" } },
+        "required": ["schema_version"]
+      },
+      "then": { "required": ["lifecycle"] }
+    }
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0", "1.1"] },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "provikom_converter_version": { "type": "string" },
+    "backend": { "type": "string" },
+    "backend_display_name": { "type": "string" },
+    "runtime_version": { "type": "integer" },
+    "is_experimental": { "type": "boolean" },
+    "runtime": {
+      "type": "object",
+      "required": ["version", "label", "experimental", "selection_reason"],
+      "properties": {
+        "version": { "type": "integer" },
+        "label": { "type": "string" },
+        "experimental": { "type": "boolean" },
+        "selection_reason": { "type": "string" }
+      }
+    },
+    "entry_point": { "type": "string" },
+    "jar_file": { "type": "string" },
+    "java_major_version": { "type": "integer" },
+    "game": {
+      "type": "object",
+      "required": ["title", "jar_file", "sha256", "size_bytes", "main_class", "java_major_version", "java_version", "has_audio", "gui_apis", "audio_apis"],
+      "properties": {
+        "title": { "type": "string" },
+        "jar_file": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "main_class": { "type": ["string", "null"] },
+        "entry_point_source": { "type": "string" },
+        "entry_point_candidates": { "type": "array", "items": { "type": "string" } },
+        "java_major_version": { "type": "integer" },
+        "java_version": { "type": "string" },
+        "has_audio": { "type": "boolean" },
+        "gui_apis": { "type": "array", "items": { "type": "string" } },
+        "audio_apis": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Static prediction only. Never rewritten by runtime verification.",
+      "required": ["status", "summary"],
+      "properties": {
+        "status": { "type": "string" },
+        "summary": { "type": "string" },
+        "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "verified_capabilities": { "type": "array", "items": { "type": "string" } },
+        "assumptions_and_risks": { "type": "array", "items": { "type": "string" } },
+        "blockers": { "type": "array", "items": { "type": "string" } },
+        "workarounds_needed": { "type": "array", "items": { "type": "string" } },
+        "remediation_steps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": ["web_root", "virtual_mount_root", "main_jar", "main_jar_virtual_path", "class_path"],
+      "properties": {
+        "web_root": { "type": "string" },
+        "virtual_mount_root": { "type": "string" },
+        "main_jar": { "type": "string" },
+        "main_jar_virtual_path": { "type": "string" },
+        "class_path": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["relative_path", "virtual_path", "size_bytes", "sha256"],
+        "properties": {
+          "relative_path": { "type": "string" },
+          "virtual_path": { "type": "string" },
+          "size_bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "generated_files": { "type": "array", "items": { "type": "string" } },
+    "lifecycle": { "$ref": "#/definitions/lifecycle" }
+  },
+  "definitions": {
+    "lifecycle": {
+      "type": "object",
+      "required": ["state", "prediction_only", "execution_verified", "source"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["analyzed", "candidate", "built", "runtime_verified", "failed", "unsupported"]
+        },
+        "prediction_only": { "type": "boolean" },
+        "execution_verified": { "type": "boolean" },
+        "source": { "type": "string" },
+        "verification": {
+          "type": "object",
+          "properties": {
+            "state": { "type": "string", "enum": ["not_run", "runtime_verified", "failed"] },
+            "automated": { "type": "boolean" },
+            "manual": { "type": "boolean" },
+            "record": { "type": "string" },
+            "screenshots": { "type": "array", "items": { "type": "string" } },
+            "console_errors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

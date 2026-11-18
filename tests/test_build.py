@@ -38,6 +38,7 @@ from tests.fixtures import (
     create_minimal_class_bytes,
     create_synthetic_jar,
     find_project2024_games_dir,
+    require_fixture,
 )
 
 GAMES_DIR = find_project2024_games_dir()
@@ -48,8 +49,7 @@ PADDLE_JAR = GAMES_DIR / "PaddleGame.jar"
 
 
 def _require(path: Path) -> None:
-    if not path.is_file():
-        raise unittest.SkipTest(f"Archive not available: {path}")
+    require_fixture(path, label="game archive")
 
 
 class TestSelectCheerpJRuntime(unittest.TestCase):

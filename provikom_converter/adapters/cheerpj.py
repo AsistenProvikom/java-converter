@@ -31,10 +31,12 @@ from provikom_converter.analyzer.compatibility import (
 )
 from provikom_converter.analyzer.rules import AnalysisFeatures
 from provikom_converter.artifacts.report import calculate_sha256
+from provikom_converter.build_safety import atomic_output_directory
+from provikom_converter.lifecycle import built_artifact_lifecycle
 from provikom_converter.version import __version__
 
 
-MANIFEST_SCHEMA_VERSION = "1.0"
+MANIFEST_SCHEMA_VERSION = "1.1"
 CHEERPJ_CDN_LOADER = "https://cjrtnc.leaningtech.com/5.0/loader.js"
 
 
@@ -1112,21 +1114,28 @@ class CheerpJAdapter(BackendAdapter):
         options: BuildOptions,
     ) -> BuildResult:
         """Produce a complete, self-contained CheerpJ 5.0 static web artifact."""
-        out_dir = Path(options.output_directory).resolve()
+        source_jar_path = Path(analysis_result.target_path).resolve()
+        final_output_dir = Path(options.output_directory).expanduser().resolve()
 
-        if out_dir.exists():
-            if not out_dir.is_dir():
-                raise FileExistsError(f"Destination path '{out_dir}' exists and is not a directory.")
-            if any(out_dir.iterdir()):
-                if not options.force_overwrite:
-                    raise FileExistsError(
-                        f"Destination directory '{out_dir}' already exists and is not empty. "
-                        "Use --force to overwrite."
-                    )
-                shutil.rmtree(out_dir)
+        with atomic_output_directory(
+            source_jar_path=source_jar_path,
+            output_directory=final_output_dir,
+            force_overwrite=options.force_overwrite,
+        ) as build_dir:
+            return self._generate_artifact_into(
+                analysis_result=analysis_result,
+                options=options,
+                out_dir=build_dir,
+                final_output_dir=final_output_dir,
+            )
 
-        out_dir.mkdir(parents=True, exist_ok=True)
-
+    def _generate_artifact_into(
+        self,
+        analysis_result: Any,
+        options: BuildOptions,
+        out_dir: Path,
+        final_output_dir: Path,
+    ) -> BuildResult:
         inventory: ArchiveInventory = analysis_result.inventory
         majors = [pc.major_version for pc in analysis_result.parsed_classes]
         max_major = max(majors) if majors else 52
@@ -1225,6 +1234,7 @@ class CheerpJAdapter(BackendAdapter):
             "entry_point": "index.html",
             "jar_file": source_jar_path.name,
             "java_major_version": max_major,
+            "lifecycle": built_artifact_lifecycle(),
             "game": {
                 "title": game_title,
                 "jar_file": source_jar_path.name,
@@ -1257,8 +1267,8 @@ class CheerpJAdapter(BackendAdapter):
 
         return BuildResult(
             backend_id=self.backend_id,
-            output_directory=str(out_dir),
-            entry_html=str(out_dir / "index.html"),
+            output_directory=str(final_output_dir),
+            entry_html=str(final_output_dir / "index.html"),
             game_jar_name=source_jar_path.name,
             game_title=game_title,
             runtime_version=runtime_version,
@@ -1266,7 +1276,7 @@ class CheerpJAdapter(BackendAdapter):
             is_experimental=is_experimental,
             staged_dependencies=staged_deps,
             generated_files=generated_files,
-            manifest_path=str(manifest_file),
+            manifest_path=str(final_output_dir / "manifest.json"),
             metadata=manifest_data,
         )
 

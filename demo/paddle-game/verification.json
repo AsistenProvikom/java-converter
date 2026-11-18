@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-11-17T16:43:53Z",
+  "game": "PaddleGame.jar",
+  "artifact": "demo/paddle-game",
+  "state": "runtime_verified",
+  "prediction_only": false,
+  "execution_verified": true,
+  "automated": true,
+  "manual": false,
+  "checks": [
+    {
+      "name": "canvas_mounted",
+      "passed": true,
+      "detail": "running"
+    },
+    {
+      "name": "level_select_rendered",
+      "passed": true,
+      "detail": {
+        "unique_colors": 6534.0,
+        "luminance_stddev": 69.37225335714385,
+        "non_dark_ratio": 1.0,
+        "purple_ratio": 0.001851851851851852,
+        "sky_blue_ratio": 0.1499074074074074,
+        "warm_ratio": 0.1512962962962963
+      }
+    },
+    {
+      "name": "easy_mode_started_game_ui",
+      "passed": true,
+      "detail": {
+        "difference_ratio": 0.9779629629629629,
+        "unique_colors": 4101.0,
+        "luminance_stddev": 53.37172192321363,
+        "non_dark_ratio": 0.8130555555555555,
+        "purple_ratio": 0.0,
+        "sky_blue_ratio": 0.07314814814814814,
+        "warm_ratio": 0.24212962962962964
+      }
+    }
+  ],
+  "screenshots": [
+    "docs/screenshots/paddle_running.png",
+    "docs/screenshots/paddle_interaction.png"
+  ],
+  "console_errors": [],
+  "runtime_diagnostics": [
+    "log:               ____ _                              _\n             / ___| |__   ___  ___ _ __ _ __     | |\n            | |   | '_ \\ / _ \\/ _ \\ '__| '_ \\ _  | |\n            | |___| | | |  __/  __/ |  | |_) | |_| |\n             \\____|_| |_|\\___|\\___|_|  | .__/ \\___/\n                                       |_|\n\n CHEERPJ COMMUNITY EDITION - FOR PERSONAL AND NON-BUSINESS USE ONLY\nAny other use requires a license: https://cheerpj.com/docs/licensing",
+    "log: CheerpJ: Font rempping for Microsoft YaHei",
+    "log: \n",
+    "log: CheerpJ: Font rempping for OCR A Extended",
+    "log: \n",
+    "log: CheerpJ: Font rempping for Arial",
+    "log: \n",
+    "log: CheerpJ: Font rempping for Comic Sans MS",
+    "log: \n",
+    "log: java.io.IOException: mark/reset not supported",
+    "log: \n",
+    "log: \tat java.util.zip.InflaterInputStream.reset(Unknown Source)",
+    "log: \n",
+    "log: \tat java.io.FilterInputStream.reset(Unknown Source)",
+    "log: \n",
+    "log: \tat com.sun.media.sound.SoftMidiAudioFileReader.getAudioInputStream(Unknown Source)",
+    "log: \n",
+    "log: \tat javax.sound.sampled.AudioSystem.getAudioInputStream(Unknown Source)",
+    "log: \n",
+    "log: \tat keyboarddemo.GamePanel.play(Unknown Source)",
+    "log: \n",
+    "log: \tat keyboarddemo.GamePanel.actionPerformed(Unknown Source)",
+    "log: \n",
+    "log: \tat javax.swing.Timer.fireActionPerformed(Unknown Source)",
+    "log: \n",
+    "log: \tat javax.swing.Timer$DoPostEvent.run(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.event.InvocationEvent.dispatch(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventQueue.dispatchEventImpl(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventQueue.access$500(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventQueue$3.run(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventQueue$3.run(Unknown Source)",
+    "log: \n",
+    "log: \tat java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventQueue.dispatchEvent(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventDispatchThread.pumpOneEventForFilters(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventDispatchThread.pumpEventsForFilter(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventDispatchThread.pumpEventsForHierarchy(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventDispatchThread.pumpEvents(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventDispatchThread.pumpEvents(Unknown Source)",
+    "log: \n",
+    "log: \tat java.awt.EventDispatchThread.run(Unknown Source)",
+    "log: \n"
+  ],
+  "notes": [
+    "Automated Chromium verification; manual gameplay verification not performed.",
+    "Known non-fatal audio diagnostic: java.io.IOException: mark/reset not supported."
+  ],
+  "duration_seconds": 27.743,
+  "artifact_jar_sha256": "41b423488d9aba93f184ce56281417a836996417e5ed85404b8174034973b8dd"
+}

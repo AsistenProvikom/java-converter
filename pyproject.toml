@@ -26,3 +26,9 @@ provikom-converter = "provikom_converter.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["provikom_converter*"]
+
+[project.optional-dependencies]
+browser = [
+    "playwright>=1.40",
+    "Pillow>=10",
+]

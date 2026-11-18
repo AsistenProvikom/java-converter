@@ -16,7 +16,7 @@ import re
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import PurePath
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 
 class ArchiveSecurityError(Exception):
@@ -129,7 +129,7 @@ def parse_manifest(content: bytes) -> ManifestInfo:
 class SafeArchiveReader:
     """Safely opens and inspects JAR archives without extracting them to disk."""
 
-    def __init__(self, file_path_or_bytes: str | bytes, name: Optional[str] = None):
+    def __init__(self, file_path_or_bytes: Union[str, bytes], name: Optional[str] = None):
         if isinstance(file_path_or_bytes, bytes):
             self.source = io.BytesIO(file_path_or_bytes)
             self.display_name = name or "<bytes>"

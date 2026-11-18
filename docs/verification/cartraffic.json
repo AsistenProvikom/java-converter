@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-11-17T16:42:57Z",
+  "game": "CarTraffic.jar",
+  "artifact": "demo/car-traffic",
+  "state": "runtime_verified",
+  "prediction_only": false,
+  "execution_verified": true,
+  "automated": true,
+  "manual": false,
+  "checks": [
+    {
+      "name": "canvas_mounted",
+      "passed": true,
+      "detail": "running"
+    },
+    {
+      "name": "menu_ui_rendered",
+      "passed": true,
+      "detail": {
+        "unique_colors": 2287.0,
+        "luminance_stddev": 43.42500211834132,
+        "non_dark_ratio": 0.9816666666666667,
+        "purple_ratio": 0.7766666666666666,
+        "sky_blue_ratio": 0.056018518518518516,
+        "warm_ratio": 0.02861111111111111
+      }
+    },
+    {
+      "name": "character_selection_and_next",
+      "passed": true,
+      "detail": {
+        "difference_ratio": 0.6069444444444444,
+        "unique_colors": 1894.0,
+        "luminance_stddev": 34.643517306733685,
+        "non_dark_ratio": 0.9741666666666666,
+        "purple_ratio": 0.5075925925925926,
+        "sky_blue_ratio": 0.021296296296296296,
+        "warm_ratio": 0.011851851851851851
+      }
+    }
+  ],
+  "screenshots": [
+    "docs/screenshots/cartraffic_running.png",
+    "docs/screenshots/cartraffic_interaction.png"
+  ],
+  "console_errors": [],
+  "runtime_diagnostics": [
+    "log:               ____ _                              _\n             / ___| |__   ___  ___ _ __ _ __     | |\n            | |   | '_ \\ / _ \\/ _ \\ '__| '_ \\ _  | |\n            | |___| | | |  __/  __/ |  | |_) | |_| |\n             \\____|_| |_|\\___|\\___|_|  | .__/ \\___/\n                                       |_|\n\n CHEERPJ COMMUNITY EDITION - FOR PERSONAL AND NON-BUSINESS USE ONLY\nAny other use requires a license: https://cheerpj.com/docs/licensing"
+  ],
+  "notes": [
+    "Automated Chromium verification; manual gameplay verification not performed."
+  ],
+  "duration_seconds": 25.296,
+  "artifact_jar_sha256": "ff1e14564f77cb356ec9ffbee82fb1291981c57471082b7c0faa5cc6bcff1f2e"
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-11-17T16:44:03Z",
+  "game": "PongGame.jar",
+  "artifact": "demo/pong-game",
+  "state": "failed",
+  "prediction_only": false,
+  "execution_verified": false,
+  "automated": true,
+  "manual": false,
+  "checks": [
+    {
+      "name": "java_runtime_error_surfaced",
+      "passed": true,
+      "detail": {
+        "status": "error",
+        "title": "Java Runtime Error Detected"
+      }
+    }
+  ],
+  "screenshots": [
+    "docs/screenshots/pong_audio_error.png"
+  ],
+  "console_errors": [],
+  "runtime_diagnostics": [
+    "log:               ____ _                              _\n             / ___| |__   ___  ___ _ __ _ __     | |\n            | |   | '_ \\ / _ \\/ _ \\ '__| '_ \\ _  | |\n            | |___| | | |  __/  __/ |  | |_) | |_| |\n             \\____|_| |_|\\___|\\___|_|  | .__/ \\___/\n                                       |_|\n\n CHEERPJ COMMUNITY EDITION - FOR PERSONAL AND NON-BUSINESS USE ONLY\nAny other use requires a license: https://cheerpj.com/docs/licensing",
+    "log: Exception in thread \"AWT-EventQueue-0\" ",
+    "log: java.lang.ExceptionInInitializerError\n",
+    "log: Caused by: java.lang.IllegalArgumentException: No line matching interface Clip supporting format PCM_SIGNED unknown sample rate, 16 bit, stereo, 4 bytes/frame, big-endian is supported.\n",
+    "log: \tat javax.sound.sampled.AudioSystem.getLine(Unknown Source)\n",
+    "log: \tat javax.sound.sampled.AudioSystem.getClip(Unknown Source)\n",
+    "log: \tat ucupandriska.ponggame.util.AudioLoader.loadClip(Unknown Source)\n",
+    "log: \tat ucupandriska.ponggame.GameWindow.<clinit>(Unknown Source)\n",
+    "log: \tat ucupandriska.ponggame.Main.lambda$0(Unknown Source)\n",
+    "log: \tat ucupandriska.ponggame.Main$$Lambda.run(Unknown Source)\n",
+    "log: \tat java.awt.event.InvocationEvent.dispatch(Unknown Source)\n",
+    "log: \tat java.awt.EventQueue.dispatchEventImpl(Unknown Source)\n",
+    "log: \tat java.awt.EventQueue$4.run(Unknown Source)\n",
+    "log: \tat java.awt.EventQueue$4.run(Unknown Source)\n",
+    "log: \tat java.security.AccessController.executePrivileged(Unknown Source)\n",
+    "log: \tat java.security.AccessController.doPrivileged(Unknown Source)\n",
+    "log: \tat java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(Unknown Source)\n",
+    "log: \tat java.awt.EventQueue.dispatchEvent(Unknown Source)\n",
+    "log: \tat java.awt.EventDispatchThread.pumpOneEventForFilters(Unknown Source)\n",
+    "log: \tat java.awt.EventDispatchThread.pumpEventsForFilter(Unknown Source)\n",
+    "log: \tat java.awt.EventDispatchThread.pumpEventsForHierarchy(Unknown Source)\n",
+    "log: \tat java.awt.EventDispatchThread.pumpEvents(Unknown Source)\n",
+    "log: \tat java.awt.EventDispatchThread.pumpEvents(Unknown Source)\n",
+    "log: \tat java.awt.EventDispatchThread.run(Unknown Source)\n",
+    "error: [Provikom Player Error] Java Runtime Error Detected The Java process raised an exception. The game window may not appear or may not be playable. Exception in thread \"AWT-EventQueue-0\" \njava.lang.ExceptionInInitializerError\n\nCaused by: java.lang.IllegalArgumentException: No line matching interface Clip supporting format PCM_SIGNED unknown sample rate, 16 bit, stereo, 4 bytes/frame, big-endian is supported.\n"
+  ],
+  "notes": [
+    "Known limitation: browser Clip support rejects the game's 8-bit mono 44.1 kHz WAV.",
+    "Artifact intentionally retained under build/verification/pong for debugging.",
+    "Automated Chromium verification; manual gameplay verification not performed."
+  ],
+  "duration_seconds": 9.404,
+  "artifact_jar_sha256": "8439144321d270bf7f50aad2ccda026223fd27a19c388ff90c81731dd9bd6b5b"
+}

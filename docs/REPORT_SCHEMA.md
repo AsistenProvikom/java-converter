@@ -3,7 +3,8 @@
 ## Schema Identification
 - **Schema URI**: `https://provikom.org/schema/v1/compatibility-report.json`
 - **Specification**: JSON Schema Draft-07
-- **Schema File**: [schema/compatibility-report.schema.json](file:///home/hafidz/project/java-converter/schema/compatibility-report.schema.json)
+- **Schema File**: [schema/compatibility-report.schema.json](../schema/compatibility-report.schema.json)
+- **Artifact Manifest Schema**: [schema/artifact-manifest.schema.json](../schema/artifact-manifest.schema.json)
 
 ---
 
@@ -20,7 +21,8 @@ A valid report contains eight mandatory top-level sections:
   "class_file_info": { ... },
   "features_detected": { ... },
   "backend_compatibility": { ... },
-  "recommendation": { ... }
+  "recommendation": { ... },
+  "lifecycle": { ... }
 }
 ```
 
@@ -108,3 +110,42 @@ Each evaluation contains:
 - `secondary_backend` (`string | null`)
 - `feasibility` (`"ready"` | `"workaround_required"` | `"blocked"`)
 - `key_takeaways` (`array[string]`)
+
+### 8. `lifecycle` (additive in Milestone 2B)
+
+`lifecycle` separates a **static compatibility prediction** from **execution
+evidence**. It is optional in the report schema so reports generated before
+Milestone 2B remain valid.
+
+| Field | Type | Description |
+|---|---|---|
+| `state` | `string` | One of `analyzed`, `candidate`, `built`, `runtime_verified`, `failed`, `unsupported`. |
+| `prediction_only` | `boolean` | `true` when no browser execution evidence exists. |
+| `execution_verified` | `boolean` | `true` only after automated or manual browser verification passed. |
+| `source` | `string` | `static_analysis`, `artifact_generation`, or `browser_verification`. |
+| `verification` | `object` | Verification state, automation/manual flags, evidence record, screenshots, console errors. |
+
+#### Lifecycle states
+
+| State | Meaning |
+|---|---|
+| `analyzed` | Static bytecode/compatibility analysis completed. No artifact exists. |
+| `candidate` | Static analysis predicts the archive can be built, but no artifact has been generated. |
+| `built` | A static artifact was generated successfully. **This is not runtime verification.** |
+| `runtime_verified` | Automated/manual browser checks confirmed rendered UI and expected interactions. |
+| `failed` | Browser execution or verification failed (for example, PongGame audio initialization). |
+| `unsupported` | The archive cannot be targeted by the selected backend. |
+
+Canvas mounting alone never promotes an artifact to `runtime_verified`. The
+static `backend_compatibility` block and artifact `compatibility` block remain
+predictions and are not rewritten by verification.
+
+#### Schema migration 2A -> 2B
+
+- The compatibility report schema keeps the same `$id` and required fields.
+- `lifecycle` is additive and optional; 2A reports without it still validate.
+- Artifact manifests move from schema `1.0` to `1.1` to add `lifecycle`.
+- Manifest readers must treat `lifecycle` as optional so 1.0 bundles continue to
+  load.
+- Runtime evidence is written to `verification.json` next to the artifact and
+  referenced from the manifest lifecycle block.
