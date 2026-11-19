@@ -236,6 +236,7 @@ provikom-converter/
 │   ├── MILESTONE_2_PLAN.md     # Web artifact generation roadmap
 │   ├── MILESTONE_2A_REPORT.md  # CheerpJ builder results
 │   ├── MILESTONE_2B_REPORT.md  # Hardening, CI, and verification evidence
+│   ├── MILESTONE_2C_FEASIBILITY.md  # SwingJS/Java2Script feasibility findings
 │   ├── verification/           # Runtime verification records
 │   └── screenshots/            # Browser verification evidence
 ├── schema/

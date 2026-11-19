@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "milestone": "2C.0",
+  "backend": "swingjs",
+  "runtime": "SwingJS / Java2Script 5.0.1-v7",
+  "artifact": "build/swingjs-poc",
+  "entry_point": "poc_SwingPoc.html",
+  "state": "runtime_verified",
+  "checks": [
+    {
+      "name": "canvas_mounted",
+      "passed": true,
+      "detail": {
+        "width": 720,
+        "height": 540,
+        "startup_ms": 1837.9
+      }
+    },
+    {
+      "name": "swing_timer_animates",
+      "passed": true,
+      "detail": {
+        "ticks": 40,
+        "first_state_ms": 2287.4
+      }
+    },
+    {
+      "name": "graphics2d_rendered",
+      "passed": true,
+      "detail": {
+        "unique_colors": 296.0,
+        "luminance_stddev": 11.92896807423819,
+        "non_dark_ratio": 1.0
+      }
+    },
+    {
+      "name": "keyboard_horizontal",
+      "passed": true,
+      "detail": {
+        "key": "ArrowLeft",
+        "dx": -4
+      }
+    },
+    {
+      "name": "keyboard_vertical",
+      "passed": true,
+      "detail": {
+        "key": "ArrowUp",
+        "dy": -3
+      }
+    },
+    {
+      "name": "keyboard_pause",
+      "passed": true,
+      "detail": {
+        "ticks": 76
+      }
+    },
+    {
+      "name": "keyboard_reset",
+      "passed": true,
+      "detail": {
+        "states_seen": 10
+      }
+    }
+  ],
+  "metrics": {
+    "startup_ms": 1837.9,
+    "first_state_ms": 2287.4,
+    "artifact_size_bytes": 28810518,
+    "network_bytes": 2567371,
+    "network_requests": 237,
+    "source_modifications_for_swingjs": 0,
+    "memory": {
+      "usedJSHeapSize": 18200000,
+      "totalJSHeapSize": 29400000,
+      "jsHeapSizeLimit": 3760000000
+    }
+  },
+  "screenshots": [
+    "docs/screenshots/swingjs-poc.png"
+  ],
+  "console_errors": [],
+  "http_errors": [
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:18140/swingjs/j2s/core/package.js"
+    }
+  ],
+  "warnings": [
+    "SwingJS requested an absent core/package.js; the loader reports this as an ignored non-fatal warning."
+  ],
+  "console_tail": [
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/Action.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/Timer.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/KeyboardManager.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/ComponentEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/plaf/Resizer.js",
+    "log: xhr.open async=false url=swingjs/j2s/javajs/api/js/HTML5Applet.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/plaf/JSPopupMenuUI.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/jquery/JQueryUI.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/WindowEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/awt/CausedFocusEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/FocusEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/GraphicsCallback.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/awt/SunGraphicsCallback.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/ClientPropertyKey.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/util/TimSort.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/util/ListIterator.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/ActionEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/SentEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/awt/EventQueueItem.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/JSMouse.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/MouseEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/InputEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/Point.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/geom/Point2D.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/JSKeyEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/KeyEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/JMenuBar.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/MenuElement.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/Popup.js",
+    "log: xhr.open async=false url=swingjs/j2s/javax/swing/JWindow.js"
+  ],
+  "generated_at": 1795053210
+}
