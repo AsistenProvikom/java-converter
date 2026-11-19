@@ -168,6 +168,13 @@ more conservative, repeated comparison. CI writes a separate evidence file
 under `build/swingjs-poc/verification.json` so it does not rewrite committed
 documentation.
 
+Clean-runner verification on GitHub Actions produced the same functional
+result with different timing: startup **1.66 s**, first state **1.73 s**,
+network **2,613,183 bytes** in **237 requests**, and JS heap **17.1 MB** in a
+fresh Chromium process. The archived copy is
+`docs/verification/swingjs-poc-ci.json`; the screenshot is
+`docs/screenshots/swingjs-poc-ci.png`.
+
 The verifier parses `STATE` from the SwingJS `System.out` pane, so the timer,
 movement, pause, and reset assertions come from the Java application rather
 than a JavaScript test shim.
@@ -231,8 +238,34 @@ is `runtime_verified`.
 
 The workflow uploads logs, hashes, screenshots, verification JSON, and the
 small generated POC HTML/JavaScript. It deliberately does not upload the
-SwingJS runtime/site. CI results are recorded in the pull request and below
-after the clean-runner execution completes.
+SwingJS runtime/site.
+
+Clean-runner result:
+
+- Pull-request workflow run:
+  <https://github.com/AsistenProvikom/java-converter/actions/runs/44489365327>
+- Result: **success**, job `Reproduce pinned Java2Script transpilation and
+  browser verification` completed in **2m55s**.
+- Push-triggered run for the same commit:
+  <https://github.com/AsistenProvikom/java-converter/actions/runs/44489311689>
+  (`2m17s`, success).
+- Evidence artifact: `swingjs-feasibility-evidence` (artifact
+  `14511599251`) under the run's Artifacts section.
+- Runtime state: `runtime_verified`; all seven required interaction checks
+  passed.
+- CI metrics: startup `1662.8 ms`, first state `1730.0 ms`, network
+  `2,613,183` bytes / `237` requests, artifact `28,810,518` bytes / `3,730`
+  files, source modifications `0`.
+- Generated application JavaScript: `7,555` bytes, SHA-256
+  `6bcd0e39a2c8eb77c7f63438e576f5b5541edec96a4814f5cbf04d09fcc60e69`,
+  containing the transpiled class and `STATE x=` output.
+- Toolchain manifest SHA-256:
+  `71b0364ee43816f1501291142a2874b3554ae28843d7c37d72310c79263ba6e5`.
+- The only HTTP error was the documented nonfatal `package.js` 404. There were
+  no console errors.
+- Existing Python 3.9/3.12 and Playwright Chromium checks passed on the same
+  branch. The only annotation was GitHub's non-blocking Node.js 20 action
+  deprecation notice.
 
 ## SwingJS vs CheerpJ Benchmark
 
@@ -436,12 +469,14 @@ python3 -m unittest discover -s tests -v
 
 ## Evidence Files
 
-- `docs/verification/swingjs-poc.json` - functional browser evidence.
+- `docs/verification/swingjs-poc.json` - local functional browser evidence.
+- `docs/verification/swingjs-poc-ci.json` - archived clean-runner evidence.
 - `docs/verification/swingjs-benchmark.json` - three-run benchmark, medians,
   per-run values, network and memory data.
 - `docs/SWINGJS_LICENSING.md` - component-level licensing review.
 - `.github/workflows/swingjs-feasibility.yml` - clean-runner reproduction.
-- `docs/screenshots/swingjs-poc.png` - verified SwingJS POC.
+- `docs/screenshots/swingjs-poc.png` - local verified SwingJS POC.
+- `docs/screenshots/swingjs-poc-ci.png` - clean-runner verified POC.
 - `docs/screenshots/swingjs-benchmark.png` - SwingJS benchmark screenshot.
 - `docs/screenshots/cheerpj-benchmark.png` - CheerpJ benchmark screenshot.
 - `examples/swing-poc/` - Java 8 POC and desktop smoke test.

@@ -50,6 +50,7 @@
 - **Hosted CI and Contributor Guardrails**:
   - GitHub-hosted runners only, minimal `contents: read` permissions, and pinned `project-2024` fixture commits.
   - Missing browser dependencies, fixtures, or network access fail in CI instead of skipping silently.
+  - A separate pinned SwingJS workflow reproduces the Java2Script toolchain, asserts real JavaScript generation, and verifies Swing animation/input in Chromium.
 
 ---
 
