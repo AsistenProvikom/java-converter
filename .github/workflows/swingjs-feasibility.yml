@@ -1,0 +1,123 @@
+name: SwingJS Feasibility
+
+on:
+  push:
+    branches: ["main", "milestone-*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swingjs-feasibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reproduce-transpile-and-verify:
+    name: Reproduce pinned Java2Script transpilation and browser verification
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout converter
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python browser dependencies
+        run: python -m pip install -e ".[browser]"
+
+      - name: Install Chromium and display dependencies
+        run: |
+          python -m playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install --yes xvfb libgtk-3-0
+
+      - name: Download pinned toolchain and verify checksums
+        run: python3 tools/swingjs/setup_toolchain.py
+
+      - name: Show pinned toolchain record
+        run: |
+          test -f build/swingjs-toolchain/toolchain.json
+          python3 -m json.tool build/swingjs-toolchain/toolchain.json
+
+      - name: Transpile the original POC with headless Eclipse Java2Script
+        run: >
+          xvfb-run -a --server-args="-screen 0 1280x900x24"
+          python3 tools/swingjs/build_swingjs_poc.py --require-desktop
+
+      - name: Prove the application JavaScript was generated
+        run: |
+          test -s build/swingjs-poc/site/poc_SwingPoc.html
+          test -s build/swingjs-poc/site/swingjs/j2s/poc/SwingPoc.js
+          grep -q 'Clazz.newClass' build/swingjs-poc/site/swingjs/j2s/poc/SwingPoc.js
+          grep -q 'STATE x=' build/swingjs-poc/site/swingjs/j2s/poc/SwingPoc.js
+          grep -q 'J2S SwingJS plugin processed' build/swingjs-poc/eclipse.log
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          record = json.loads(Path("build/swingjs-poc/toolchain.json").read_text())
+          assert record["generated_js_contains_poc_class"] is True, record
+          assert record["generated_js_contains_state_output"] is True, record
+          assert record["java2script_commit"] == "4091b289014b99099481c37f7c151aeb24c713cd", record
+          print("Generated JavaScript size:", record["generated_js_size_bytes"])
+          print("Generated JavaScript SHA-256:", record["generated_js_sha256"])
+          PY
+
+      - name: Verify animation and keyboard interaction in Chromium
+        run: >
+          python3 tools/swingjs/verify_swingjs_poc.py
+          --artifact-dir build/swingjs-poc
+          --evidence build/swingjs-poc/verification.json
+          --screenshot build/swingjs-poc/verification.png
+
+      - name: Assert machine-readable runtime evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          evidence = json.loads(Path("build/swingjs-poc/verification.json").read_text())
+          assert evidence["state"] == "runtime_verified", evidence["state"]
+          checks = {check["name"]: check["passed"] for check in evidence["checks"]}
+          required = {
+              "canvas_mounted",
+              "swing_timer_animates",
+              "graphics2d_rendered",
+              "keyboard_horizontal",
+              "keyboard_vertical",
+              "keyboard_pause",
+              "keyboard_reset",
+          }
+          missing = sorted(required - set(checks))
+          assert not missing, "Missing checks: {}".format(missing)
+          failed = sorted(name for name, passed in checks.items() if not passed)
+          assert not failed, "Failed checks: {}".format(failed)
+          print("Runtime evidence state:", evidence["state"])
+          print("Startup ms:", evidence["metrics"]["startup_ms"])
+          print("Network bytes:", evidence["metrics"]["network_bytes"])
+          PY
+
+      - name: Upload SwingJS diagnostics and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swingjs-feasibility-evidence
+          # Only source-derived POC output, logs, hashes, and verification
+          # evidence are uploaded. The SwingJS runtime/site is not redistributed.
+          path: |
+            build/swingjs-toolchain/toolchain.json
+            build/swingjs-poc/toolchain.json
+            build/swingjs-poc/*.log
+            build/swingjs-poc/desktop-poc.png
+            build/swingjs-poc/verification.json
+            build/swingjs-poc/verification.png
+            build/swingjs-poc/site/poc_SwingPoc.html
+            build/swingjs-poc/site/swingjs/j2s/poc/SwingPoc.js
+          if-no-files-found: warn
+          retention-days: 14

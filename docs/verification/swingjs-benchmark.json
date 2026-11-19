@@ -1,0 +1,259 @@
+{
+  "schema_version": "1.0",
+  "milestone": "2C.0",
+  "application": "SwingPoc (JFrame, JPanel, Graphics2D, Swing Timer, keyboard)",
+  "source": "examples/swing-poc",
+  "source_modifications": 0,
+  "browser": "Chromium (Playwright headless)",
+  "notes": [
+    "Both runs auto-start the application; the production CheerpJ adapter normally waits for a user click.",
+    "network_bytes is the Chromium CDP Network.loadingFinished payload for a fresh context; it includes the CheerpJ CDN runtime.",
+    "artifact_size_bytes is the locally deployed artifact and excludes the CheerpJ runtime fetched from the CDN.",
+    "SwingJS 404 for swingjs/j2s/core/package.js is a known non-fatal loader warning.",
+    "Each backend was measured 3 times in alternating order; reported timings/bytes are medians."
+  ],
+  "results": {
+    "swingjs": {
+      "startup_ms": 5950.0,
+      "first_state_ms": 6168.1,
+      "network_bytes": 2580442,
+      "network_requests": 226,
+      "memory": {
+        "usedJSHeapSize": 18200000,
+        "totalJSHeapSize": 24500000,
+        "jsHeapSizeLimit": 3760000000
+      },
+      "visual": {
+        "unique_colors": 291.0,
+        "luminance_stddev": 11.955,
+        "non_dark_ratio": 1.0
+      },
+      "canvas": {
+        "width": 720,
+        "height": 540
+      },
+      "ticks": 40,
+      "http_errors": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:52884/swingjs/j2s/core/package.js"
+        }
+      ],
+      "console_errors": [],
+      "screenshot": "docs/screenshots/swingjs-benchmark.png",
+      "startup_ms_min": 5783.4,
+      "startup_ms_max": 6014.7,
+      "first_state_ms_min": 5999.3,
+      "first_state_ms_max": 6232.3,
+      "network_bytes_min": 2580442.0,
+      "network_bytes_max": 2580442.0,
+      "network_requests_min": 226.0,
+      "network_requests_max": 226.0,
+      "runs": [
+        {
+          "startup_ms": 5950.0,
+          "first_state_ms": 6168.1,
+          "network_bytes": 2580442,
+          "network_requests": 226,
+          "memory": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 24500000,
+            "jsHeapSizeLimit": 3760000000
+          },
+          "visual": {
+            "unique_colors": 291.0,
+            "luminance_stddev": 11.955,
+            "non_dark_ratio": 1.0
+          },
+          "canvas": {
+            "width": 720,
+            "height": 540
+          },
+          "ticks": 40,
+          "http_errors": [
+            {
+              "status": 404,
+              "url": "http://127.0.0.1:52884/swingjs/j2s/core/package.js"
+            }
+          ],
+          "console_errors": [],
+          "screenshot": "docs/screenshots/swingjs-benchmark.png"
+        },
+        {
+          "startup_ms": 5783.4,
+          "first_state_ms": 5999.3,
+          "network_bytes": 2580442,
+          "network_requests": 226,
+          "memory": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 24500000,
+            "jsHeapSizeLimit": 3760000000
+          },
+          "visual": {
+            "unique_colors": 291.0,
+            "luminance_stddev": 11.955,
+            "non_dark_ratio": 1.0
+          },
+          "canvas": {
+            "width": 720,
+            "height": 540
+          },
+          "ticks": 40,
+          "http_errors": [
+            {
+              "status": 404,
+              "url": "http://127.0.0.1:52884/swingjs/j2s/core/package.js"
+            }
+          ],
+          "console_errors": [],
+          "screenshot": "docs/screenshots/swingjs-benchmark.png"
+        },
+        {
+          "startup_ms": 6014.7,
+          "first_state_ms": 6232.3,
+          "network_bytes": 2580442,
+          "network_requests": 226,
+          "memory": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 24500000,
+            "jsHeapSizeLimit": 3760000000
+          },
+          "visual": {
+            "unique_colors": 291.0,
+            "luminance_stddev": 11.955,
+            "non_dark_ratio": 1.0
+          },
+          "canvas": {
+            "width": 720,
+            "height": 540
+          },
+          "ticks": 40,
+          "http_errors": [
+            {
+              "status": 404,
+              "url": "http://127.0.0.1:52884/swingjs/j2s/core/package.js"
+            }
+          ],
+          "console_errors": [],
+          "screenshot": "docs/screenshots/swingjs-benchmark.png"
+        }
+      ],
+      "artifact_size_bytes": 28810518,
+      "artifact_file_count": 3730
+    },
+    "cheerpj": {
+      "startup_ms": 11190.0,
+      "first_state_ms": 14427.8,
+      "network_bytes": 17098913,
+      "network_requests": 121,
+      "memory": {
+        "usedJSHeapSize": 86400000,
+        "totalJSHeapSize": 116000000,
+        "jsHeapSizeLimit": 3760000000
+      },
+      "visual": {
+        "unique_colors": 405.0,
+        "luminance_stddev": 26.196,
+        "non_dark_ratio": 1.0
+      },
+      "canvas": {
+        "width": 720,
+        "height": 540
+      },
+      "ticks": 60,
+      "http_errors": [],
+      "console_errors": [],
+      "screenshot": "docs/screenshots/cheerpj-benchmark.png",
+      "startup_ms_min": 11163.7,
+      "startup_ms_max": 13493.8,
+      "first_state_ms_min": 14009.3,
+      "first_state_ms_max": 16841.9,
+      "network_bytes_min": 17098814.0,
+      "network_bytes_max": 17100651.0,
+      "network_requests_min": 121.0,
+      "network_requests_max": 121.0,
+      "runs": [
+        {
+          "startup_ms": 11163.7,
+          "first_state_ms": 14009.3,
+          "network_bytes": 17100651,
+          "network_requests": 121,
+          "memory": {
+            "usedJSHeapSize": 76600000,
+            "totalJSHeapSize": 109000000,
+            "jsHeapSizeLimit": 3760000000
+          },
+          "visual": {
+            "unique_colors": 401.0,
+            "luminance_stddev": 26.183,
+            "non_dark_ratio": 1.0
+          },
+          "canvas": {
+            "width": 720,
+            "height": 540
+          },
+          "ticks": 60,
+          "http_errors": [],
+          "console_errors": [],
+          "screenshot": "docs/screenshots/cheerpj-benchmark.png"
+        },
+        {
+          "startup_ms": 11190.0,
+          "first_state_ms": 14427.8,
+          "network_bytes": 17098814,
+          "network_requests": 121,
+          "memory": {
+            "usedJSHeapSize": 86400000,
+            "totalJSHeapSize": 116000000,
+            "jsHeapSizeLimit": 3760000000
+          },
+          "visual": {
+            "unique_colors": 401.0,
+            "luminance_stddev": 26.183,
+            "non_dark_ratio": 1.0
+          },
+          "canvas": {
+            "width": 720,
+            "height": 540
+          },
+          "ticks": 60,
+          "http_errors": [],
+          "console_errors": [],
+          "screenshot": "docs/screenshots/cheerpj-benchmark.png"
+        },
+        {
+          "startup_ms": 13493.8,
+          "first_state_ms": 16841.9,
+          "network_bytes": 17098913,
+          "network_requests": 121,
+          "memory": {
+            "usedJSHeapSize": 91700000,
+            "totalJSHeapSize": 116000000,
+            "jsHeapSizeLimit": 3760000000
+          },
+          "visual": {
+            "unique_colors": 405.0,
+            "luminance_stddev": 26.196,
+            "non_dark_ratio": 1.0
+          },
+          "canvas": {
+            "width": 720,
+            "height": 540
+          },
+          "ticks": 60,
+          "http_errors": [],
+          "console_errors": [],
+          "screenshot": "docs/screenshots/cheerpj-benchmark.png"
+        }
+      ],
+      "artifact_size_bytes": 6371,
+      "artifact_file_count": 3
+    }
+  },
+  "comparison": {
+    "startup_ratio_cheerpj_over_swingjs": 1.88,
+    "first_state_ratio_cheerpj_over_swingjs": 2.34,
+    "network_ratio_cheerpj_over_swingjs": 6.63
+  },
+  "generated_at": 1795077328
+}

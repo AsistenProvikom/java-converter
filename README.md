@@ -50,6 +50,7 @@
 - **Hosted CI and Contributor Guardrails**:
   - GitHub-hosted runners only, minimal `contents: read` permissions, and pinned `project-2024` fixture commits.
   - Missing browser dependencies, fixtures, or network access fail in CI instead of skipping silently.
+  - A separate pinned SwingJS workflow reproduces the Java2Script toolchain, asserts real JavaScript generation, and verifies Swing animation/input in Chromium.
 
 ---
 
@@ -187,6 +188,7 @@ Evidence records:
 - **Demo game archives are third-party assets.** The MIT license covers the converter source and documentation, not the game JARs and screenshots under `demo/` and `docs/screenshots/`. These assets originate from `AsistenProvikom/project-2024`; no upstream LICENSE or NOTICE file was found during the Milestone 2B audit. Do not redistribute them without permission from the rights holders. For a fully publishable release, replace them with clearly licensed fixtures or remove them.
 - **PongGame audio is a known limitation.** Browser `Clip` support rejects the game's 8-bit mono 44.1 kHz WAV. The player surfaces the Java exception; the artifact is intentionally kept available for debugging.
 - **PaddleGame audio produces a non-fatal diagnostic.** `java.io.IOException: mark/reset not supported` is expected and does not prevent rendering or interaction.
+- **SwingJS/Java2Script artifacts are not release-ready.** Milestone 2C.0 proves a source-backed feasibility path, but Java2Script's GPLv2+Classpath-Exception/EPL/Apache/JSON obligations and runtime notice requirements are unresolved. Generated SwingJS sites remain local/CI test artifacts and must not be published until reviewed. See [docs/SWINGJS_LICENSING.md](docs/SWINGJS_LICENSING.md).
 
 ---
 
@@ -227,8 +229,12 @@ provikom-converter/
 │   ├── lifecycle.py            # Lifecycle states and verification evidence
 │   ├── server.py               # Range-Request HTTP server for artifacts
 │   └── cli.py                  # CLI commands (analyze, build, serve, batch, schema)
-├── .github/workflows/ci.yml    # Hosted CI with pinned fixtures and browser job
+├── .github/workflows/
+│   ├── ci.yml                  # Hosted CI with pinned fixtures and browser job
+│   └── swingjs-feasibility.yml # Pinned SwingJS transpile/verify reproduction
 ├── demo/                       # Generated playable web artifacts
+├── examples/swing-poc/         # Java 8 Swing feasibility POC and desktop smoke test
+├── tools/swingjs/              # Pinned toolchain setup, build, verify, benchmark
 ├── docs/
 │   ├── ARCHITECTURE.md         # Full architecture and threat model
 │   ├── REPORT_SCHEMA.md        # JSON schema documentation
@@ -236,6 +242,8 @@ provikom-converter/
 │   ├── MILESTONE_2_PLAN.md     # Web artifact generation roadmap
 │   ├── MILESTONE_2A_REPORT.md  # CheerpJ builder results
 │   ├── MILESTONE_2B_REPORT.md  # Hardening, CI, and verification evidence
+│   ├── MILESTONE_2C_FEASIBILITY.md  # SwingJS/Java2Script feasibility findings
+│   ├── SWINGJS_LICENSING.md    # Java2Script runtime/output licensing review
 │   ├── verification/           # Runtime verification records
 │   └── screenshots/            # Browser verification evidence
 ├── schema/

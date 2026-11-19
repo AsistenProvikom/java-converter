@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "jdk": {
+    "version": "17.0.21.1+2",
+    "vendor": "Eclipse Temurin",
+    "url": "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21.1%2B2/OpenJDK17U-jdk_x64_linux_hotspot_17.0.21.1_2.tar.gz",
+    "archive_name": "OpenJDK17U-jdk_x64_linux_hotspot_17.0.21.1_2.tar.gz",
+    "archive_size_bytes": 193630735,
+    "sha256": "0b0ac5eab6db6abaec68c9913bcddb31321e5da411c45073d520d9c125e6f7b4"
+  },
+  "eclipse": {
+    "version": "4.31.0",
+    "release": "2024-03 R",
+    "edition": "Eclipse IDE for Java Developers",
+    "url": "https://download.eclipse.org/technology/epp/downloads/release/2024-03/R/eclipse-java-2024-03-R-linux-gtk-x86_64.tar.gz",
+    "archive_name": "eclipse-java-2024-03-R-linux-gtk-x86_64.tar.gz",
+    "archive_size_bytes": 336693831,
+    "sha256": "f16a8714bcb06105edcd41b1055b2dc46a95539e561e8029667c99eaeaf85e05",
+    "sha512": "973c94a0a029c29d717823a53c3a65f99fa53d51f605872c5dd854620e16cd4cb2c2ff8a5892cd550a70ab19e1a0a0d2e792661e936bd3d2bef4532bc533048b",
+    "provenance": "SHA-256 computed from the archive whose SHA-512 matches Eclipse's published .sha512 file."
+  },
+  "java2script": {
+    "repository": "https://github.com/BobHanson/java2script.git",
+    "commit": "4091b289014b99099481c37f7c151aeb24c713cd",
+    "short_commit": "4091b28",
+    "compiler_version": "5.0.1",
+    "runtime_version": "5.0.1-v7",
+    "compiler_jar": "sources/net.sf.j2s.core/dist/swingjs/j2s.core.jar",
+    "compiler_jar_sha256": "81dbd7dbbc1f9eff90d3a47c48d3625b135ab8c3a12345d491f41a0bc6dbd76a",
+    "runtime_zip": "sources/net.sf.j2s.core/dist/swingjs/SwingJS-site.zip",
+    "runtime_zip_sha256": "2b275f7c1bbd420aa79a5831a1fd2d9e4b3dd75079f0f2eb8fe29d13e0d4cec0",
+    "license_sha256": "b3bffcae3b9483cb91aefb6a4fb2fcacef8f9ac5bf7ac505000bc1b7a2a2ed5e"
+  }
+}
