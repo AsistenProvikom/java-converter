@@ -41,12 +41,14 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 
 class LocalServer:
-    def __init__(self, directory: Path, port: int):
+    def __init__(self, directory: Path, port: int = 0):
+        socketserver.ThreadingTCPServer.allow_reuse_address = True
         self.server = socketserver.ThreadingTCPServer(
             ("127.0.0.1", port),
             functools.partial(QuietHandler, directory=str(directory)),
         )
         self.server.daemon_threads = True
+        self.port = self.server.server_address[1]
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
 
     def __enter__(self):
@@ -163,22 +165,30 @@ def verify(artifact_dir: Path, port: int, evidence: Path, screenshot: Path) -> D
     network_requests = 0
     http_errors: List[Tuple[int, str]] = []
 
+    def on_loading_finished(params):
+        nonlocal network_bytes
+        network_bytes += int(params.get("encodedDataLength") or 0)
+
+    def on_request(params):
+        nonlocal network_requests
+        network_requests += 1
+
     def on_response(response):
-        nonlocal network_bytes, network_requests
         try:
             if response.status >= 400:
                 http_errors.append((response.status, response.url))
-            length = response.headers.get("content-length")
-            if length:
-                network_bytes += int(length)
-                network_requests += 1
         except Exception:
             pass
 
-    with LocalServer(artifact_dir / "site", port):
+    with LocalServer(artifact_dir / "site", port) as server:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
-            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            cdp = context.new_cdp_session(page)
+            cdp.on("Network.loadingFinished", on_loading_finished)
+            cdp.on("Network.requestWillBeSent", on_request)
+            cdp.send("Network.enable")
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.on(
                 "console",
@@ -191,7 +201,7 @@ def verify(artifact_dir: Path, port: int, evidence: Path, screenshot: Path) -> D
 
             started = time.time()
             page.goto(
-                "http://127.0.0.1:{}/poc_SwingPoc.html".format(port),
+                "http://127.0.0.1:{}/poc_SwingPoc.html".format(server.port),
                 wait_until="load",
                 timeout=60000,
             )
@@ -338,6 +348,7 @@ def verify(artifact_dir: Path, port: int, evidence: Path, screenshot: Path) -> D
                     jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
                 } : null"""
             )
+            page.wait_for_timeout(300)
             body_text = page.locator("body").inner_text()
             warnings = []
             package_missing = any(
@@ -407,7 +418,7 @@ def verify(artifact_dir: Path, port: int, evidence: Path, screenshot: Path) -> D
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifact-dir", default=str(DEFAULT_ARTIFACT))
-    parser.add_argument("--port", type=int, default=18140)
+    parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--evidence", default=str(DEFAULT_EVIDENCE))
     parser.add_argument("--screenshot", default=str(DEFAULT_SCREENSHOT))
     return parser.parse_args(argv)
@@ -431,7 +442,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("  first_state_ms: {}".format(metrics["first_state_ms"]))
     print("  artifact_size_bytes: {:,}".format(metrics["artifact_size_bytes"]))
     print("  network_bytes: {:,}".format(metrics["network_bytes"]))
-    print("  evidence: {}".format(DEFAULT_EVIDENCE.relative_to(ROOT)))
+    print("  evidence: {}".format(Path(args.evidence).expanduser()))
     return 0
 
 

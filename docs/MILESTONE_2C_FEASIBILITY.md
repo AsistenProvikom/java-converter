@@ -7,8 +7,8 @@
 SwingJS/Java2Script successfully transpiled and ran the Milestone 2C.0 POC in
 Chromium with no J2S annotations or JavaScript shims. The POC used a real
 `JFrame`, `JPanel`, `Graphics2D`, `Swing Timer`, and keyboard controls. Browser
-verification measured startup to visible canvas at **1.84 s** in a focused run;
-the cold, instrumented three-run benchmark measured a **5.92 s median**.
+verification measured startup to visible canvas at **2.01 s** in a focused run;
+the cold, instrumented three-run benchmark measured a **5.95 s median**.
 CheerpJ rendered the same JAR correctly but was slower to start and transferred
 more data.
 
@@ -23,7 +23,7 @@ The "conditional" part is material:
 - The SwingJS/Java2Script licensing and distribution model requires review
   before shipping generated artifacts.
 - The generated SwingJS site is **28.8 MB on disk**, even though this POC only
-  fetched **2.58 MB** over the network.
+  fetched roughly **2.6 MB** over the network in focused verification.
 
 Proceed to 2C.1 only for Java 8 Swing projects with available source. Keep
 CheerpJ as the fallback and default for JAR-only inputs.
@@ -74,11 +74,24 @@ failure so the build cannot hang on desktop verification.
 
 ### Build and Verification Tooling
 
+- `tools/swingjs/setup_toolchain.py`
+  - Downloads the pinned JDK and Eclipse archives.
+  - Rejects archives whose size or SHA-256 does not match the manifest.
+  - Fetches the exact Java2Script commit, verifies the compiler JAR and runtime
+    ZIP hashes, and installs the Eclipse plug-in into an ignored toolchain
+    directory.
+  - Writes `build/swingjs-toolchain/toolchain.json`.
+- `tools/swingjs/toolchain_manifest.json`
+  - Machine-readable pins for versions, URLs, revisions, sizes, and hashes.
 - `tools/swingjs/build_swingjs_poc.py`
+  - Resolves the managed toolchain by default; explicit paths remain supported.
+  - Verifies the managed runtime and compiler hashes before building.
   - Builds a small Eclipse application that imports the POC and triggers the
     Java2Script JDT compilation participant.
   - Packages the generated SwingJS site and a comparable `SwingPoc.jar`.
   - Runs the desktop smoke test.
+  - Rejects missing or implausible generated JavaScript, then records its size,
+    SHA-256, and source-derived markers in `toolchain.json`.
   - Produces `build/swingjs-poc/site/poc_SwingPoc.html` and
     `build/swingjs-poc/SwingPoc.jar`.
 - `tools/swingjs/verify_swingjs_poc.py`
@@ -86,7 +99,9 @@ failure so the build cannot hang on desktop verification.
   - Parses the Java application's own `STATE` output.
   - Verifies canvas size, animation, nonblank `Graphics2D` content, horizontal
     and vertical keyboard input, pause, and reset.
-  - Writes `docs/verification/swingjs-poc.json`.
+  - Writes `docs/verification/swingjs-poc.json` by default, or a caller-chosen
+    evidence path for CI.
+  - Measures network bytes with CDP, separately from artifact disk size.
 - `tools/swingjs/benchmark_swingjs.py`
   - Runs SwingJS and CheerpJ from the same POC JAR and 720x540 display.
   - Uses three alternating, fresh-browser runs and reports medians.
@@ -102,22 +117,29 @@ failure so the build cannot hang on desktop verification.
 Generated build output is under `build/` and is intentionally not committed.
 External JDK, Eclipse, and Java2Script runtime inputs are also not committed.
 
-### Toolchain
+### Pinned Toolchain
 
-Tested versions:
+Versions and SHA-256 values are defined in
+`tools/swingjs/toolchain_manifest.json` and enforced by the setup script.
 
-| Component | Version / revision |
-|---|---|
-| JDK | 17.0.21.1+2 (Temurin) |
-| Eclipse | 2024-03, IDE for Java Developers |
-| Java2Script | `BobHanson/java2script` `4091b28` |
-| J2S Eclipse plug-in | `5.0.1` |
-| SwingJS runtime | `5.0.1-v7` |
-| POC source/target | Java 8 |
+| Component | Version / revision | SHA-256 |
+|---|---|---|
+| Temurin JDK archive | 17.0.21.1+2 | `0b0ac5eab6db6abaec68c9913bcddb31321e5da411c45073d520d9c125e6f7b4` |
+| Eclipse Java IDE archive | 2024-03 R (4.31.0) | `f16a8714bcb06105edcd41b1055b2dc46a95539e561e8029667c99eaeaf85e05` |
+| Java2Script compiler | `4091b28`, J2S `5.0.1` | `81dbd7dbbc1f9eff90d3a47c48d3625b135ab8c3a12345d491f41a0bc6dbd76a` |
+| SwingJS runtime | `5.0.1-v7` | `2b275f7c1bbd420aa79a5831a1fd2d9e4b3dd75079f0f2eb8fe29d13e0d4cec0` |
+| Java2Script license | commit `4091b28` | `b3bffcae3b9483cb91aefb6a4fb2fcacef8f9ac5bf7ac505000bc1b7a2a2ed5e` |
+| POC source/target | Java 8 | Source hash recorded per build |
+
+The Eclipse archive's SHA-256 was computed from the archive whose SHA-512
+matches Eclipse's published `.sha512` value
+`973c94a0a029c29d717823a53c3a65f99fa53d51f605872c5dd854620e16cd4cb2c2ff8a5892cd550a70ab19e1a0a0d2e792661e936bd3d2bef4532bc533048b`.
+The JDK SHA-256 matches Adoptium's published `.sha256.txt` asset.
 
 Java2Script is an Eclipse JDT compilation participant, not a standalone
-command-line compiler. The build script intentionally requires an Eclipse
-installation and the `j2s.core.jar` drop-in. See "Reproduce" below.
+command-line compiler. The setup script fetches the exact commit, sparse
+checkouts the compiler/runtime distribution, verifies the artifacts, and
+installs the `j2s.core.jar` drop-in. No downloaded archive is committed.
 
 ## Functional Evidence
 
@@ -133,14 +155,18 @@ Desktop build verification passed. The browser verifier passed every check:
 | Pause | Passed |
 | Reset | Passed |
 
-Focused verifier run:
+Focused verifier run (local, fresh browser):
 
-- Startup to visible canvas: **1.84 s**
-- First Java `STATE` with `ticks > 0`: **2.29 s**
+- Startup to visible canvas: **2.01 s**
+- First Java `STATE` with `ticks > 0`: **2.51 s**
 - Artifact size: **28,810,518 bytes** in **3,730 files**
-- Network payload: **2,567,371 bytes** in **237 requests**
-- JS heap used: **18.2 MB**
-- Canvas visual: `unique_colors=296`, `luminance_stddev=11.929`
+- Network payload: **2,613,071 bytes** in **237 requests**
+- JS heap used: **17.1 MB**
+
+These numbers are single-run observations. The benchmark section below is the
+more conservative, repeated comparison. CI writes a separate evidence file
+under `build/swingjs-poc/verification.json` so it does not rewrite committed
+documentation.
 
 The verifier parses `STATE` from the SwingJS `System.out` pane, so the timer,
 movement, pause, and reset assertions come from the Java application rather
@@ -160,6 +186,54 @@ Screenshots:
 Both backends render the same app content and 720x540 canvas. Window chrome
 differs: SwingJS uses an HTML-like frame, while CheerpJ uses its own title bar.
 
+## Generated Artifact Layout
+
+The ignored build tree separates the downloadable toolchain, build evidence,
+and the deployable site:
+
+```text
+build/
+├── swingjs-toolchain/
+│   ├── downloads/                 # verified JDK/Eclipse archives
+│   ├── jdk/
+│   ├── eclipse/                   # J2S plug-in installed in dropins/
+│   ├── java2script/               # sparse, pinned Java2Script checkout
+│   └── toolchain.json             # versions, hashes, absolute paths
+└── swingjs-poc/
+    ├── SwingPoc.jar               # compiled Java 8 POC
+    ├── classes/
+    ├── desktop-poc.png
+    ├── desktop-smoke.log
+    ├── eclipse.log
+    ├── javac-poc.log
+    ├── toolchain.json             # build + generated-JS evidence
+    ├── verification.json          # CI-only if --evidence is redirected
+    ├── verification.png           # CI-only if --screenshot is redirected
+    ├── work/                      # Eclipse workspace and imported project
+    └── site/                      # deployable static site candidate
+        ├── poc_SwingPoc.html
+        └── swingjs/
+            ├── j2s/poc/SwingPoc.js
+            └── j2s/...            # SwingJS runtime/class library
+```
+
+Only `site/` is a deployment candidate. It is currently a local/CI test
+artifact because the runtime licensing and notice obligations are unresolved.
+The complete site is not committed and is not uploaded by CI.
+
+## GitHub Actions Reproduction
+
+`.github/workflows/swingjs-feasibility.yml` provisions the pinned toolchain on
+an ephemeral `ubuntu-22.04` runner, transpiles the POC with headless Eclipse,
+asserts that the generated JavaScript contains the transpiled class and state
+output, runs Playwright verification, and asserts the machine-readable result
+is `runtime_verified`.
+
+The workflow uploads logs, hashes, screenshots, verification JSON, and the
+small generated POC HTML/JavaScript. It deliberately does not upload the
+SwingJS runtime/site. CI results are recorded in the pull request and below
+after the clean-runner execution completes.
+
 ## SwingJS vs CheerpJ Benchmark
 
 Method:
@@ -177,8 +251,8 @@ Method:
 
 | Metric | SwingJS | CheerpJ | CheerpJ / SwingJS |
 |---|---:|---:|---:|
-| Startup to canvas | 5.92 s (5.85-6.39) | 19.99 s (11.40-20.00) | 3.38x |
-| First Java state | 6.14 s (6.06-6.61) | 23.66 s (14.86-27.61) | 3.85x |
+| Startup to canvas | 5.95 s (5.78-6.01) | 11.19 s (11.16-13.49) | 1.88x |
+| First Java state | 6.17 s (6.00-6.23) | 14.43 s (14.01-16.84) | 2.34x |
 | First-load network | 2.58 MB / 226 requests | 17.10 MB / 121 requests | 6.63x |
 | Local artifact | 28.81 MB / 3,730 files | 0.0064 MB / 3 files | - |
 | JS heap used | 18.2 MB | 86.4 MB | 4.7x |
@@ -187,17 +261,19 @@ Method:
 also uses WebAssembly/C++ memory that is not included, so this row is not a
 total-memory comparison and likely understates CheerpJ's footprint.
 
-The focused verifier observed faster SwingJS startup (1.84 s) than the
+The focused verifier observed faster SwingJS startup (2.01 s) than the
 benchmark. The benchmark is the conservative head-to-head comparison: it starts
 a new Chromium process for every run, enables CDP network instrumentation, and
-uses a fresh browser context. CheerpJ timing varied widely because its 17.1 MB
-runtime is fetched from the external CDN; the fastest observed startup was
-11.4 s. Do not treat the CheerpJ median as a fixed runtime constant.
+uses a fresh browser context. CheerpJ timing varied widely between sessions
+because its 17.1 MB runtime is fetched from the external CDN: this run ranged
+from 11.2 s to 13.5 s, while an earlier run observed about 20 s. Do not treat
+the CheerpJ median as a fixed runtime constant or generalize the ratios.
 
 Interpretation:
 
-- SwingJS startup and first-state latency were substantially better on this
-  POC, and the browser transferred much less data on first load.
+- SwingJS startup and first-state latency were better on this POC, and the
+  browser transferred much less data on first load. The latency margin varied
+  by session because CheerpJ's CDN runtime dominates its startup.
 - SwingJS requires deploying a **28.8 MB** static site. It does not depend on a
   third-party CDN at runtime.
 - CheerpJ has a tiny local artifact but brings a **17.1 MB** external runtime
@@ -240,24 +316,26 @@ Not tested:
 
 ## Licensing and Distribution
 
-Findings from the tested Java2Script/SwingJS tree:
+The root Java2Script license is GPLv2 with the Classpath Exception, but the
+tested tree also contains EPL 1.0 file headers, Apache 2.0/Apache Harmony
+material, OpenJDK-derived code, and the JSON.org license. The generated site
+currently ships the JSON license but not the Java2Script root license, Apache
+Harmony NOTICE, or Apache 2.0 text.
 
-- `java2script/LICENSE.txt` states GPL v2 with the Classpath Exception,
-  describing it as formerly EPL 1.0.
-- `Java2ScriptVisitor.java` carries an EPL 1.0 header.
-- The bundled JSON library includes the "Good, not Evil" JSON license.
-- The generated site bundles SwingJS runtime/class files and the JSON license,
-  but does not include a top-level Java2Script license/notice file.
+The project's MIT license does not relicense any of those components or
+CheerpJ. Redistribution rights for the generated site remain unresolved. The
+current policy is therefore:
 
-This project's MIT license does not relicense Java2Script, SwingJS, Eclipse,
-the JDK, or CheerpJ. Before distributing generated SwingJS artifacts, the
-project needs a deliberate licensing review covering the generated output,
-runtime redistribution, notices, and Classpath Exception obligations. This
-report is not legal advice.
+- Keep all generated sites under ignored `build/` directories.
+- Do not commit or upload the complete SwingJS runtime/site.
+- CI uploads only logs, hashes, the small source-derived POC JavaScript/HTML,
+  screenshots, and verification records.
+- Do not publish a SwingJS demo or gallery artifact until a distribution
+  review is complete.
 
-The build currently uses external toolchains and does not vendor the Java2Script
-runtime into the repository. A production 2C.1 pipeline must pin artifact
-hashes and decide which runtime files, notices, and licenses are shipped.
+See [SWINGJS_LICENSING.md](SWINGJS_LICENSING.md) for the component-level review,
+hashes, required notices, and open questions. This is an engineering review,
+not legal advice.
 
 ## Risks and Open Questions
 
@@ -272,9 +350,11 @@ hashes and decide which runtime files, notices, and licenses are shipped.
 4. **Input migration.** `KeyListener`-based games need a source adaptation.
 5. **Artifact weight.** 28.8 MB per deployed site may be unacceptable for a
    gallery; caching and shared runtime hosting need evaluation.
-6. **Licensing.** GPLv2+CPE/EPL and JSON-license obligations require review.
-7. **Toolchain reproducibility.** Eclipse, J2S, and the runtime are external
-   inputs. CI must pin versions/hashes and avoid `/tmp` assumptions.
+6. **Licensing.** GPLv2+CPE/EPL/Apache/JSON obligations require review and a
+   generated NOTICE/SBOM before distribution.
+7. **Toolchain reproducibility.** Local setup is now pinned and can be
+   executed from a clean checkout. Hosted CI reproduction still has to be
+   observed and recorded before this risk is closed.
 8. **CheerpJ comparison scope.** CheerpJ's CDN timing is variable and its
    production adapter waits for a user gesture. The benchmark auto-starts both
    backends and is not a full user-perceived performance model.
@@ -303,8 +383,10 @@ hashes and decide which runtime files, notices, and licenses are shipped.
 
 ## Reproduce
 
-Prerequisites: Python 3.9+, JDK 17+, Eclipse 2024-03, Java2Script at the
-reviewed revision, Playwright Chromium, and Pillow.
+Prerequisites: Python 3.9+, `git`, `tar`, `unzip`, Playwright Chromium, Pillow,
+and network access to the pinned JDK/Eclipse/Java2Script sources. The JDK and
+Eclipse installations are provisioned by the setup script; a system JDK is not
+required.
 
 ```bash
 python3 -m venv .venv
@@ -312,24 +394,31 @@ python3 -m venv .venv
 pip install -e '.[browser]'
 python3 -m playwright install chromium
 
-git clone https://github.com/BobHanson/java2script.git /tmp/java2script
-git -C /tmp/java2script checkout 4091b28
-
-export PROVIKOM_JAVA_HOME=/path/to/jdk-17
-export PROVIKOM_ECLIPSE_HOME=/path/to/eclipse
-export PROVIKOM_SWINGJS_SITE_ZIP=/tmp/java2script/sources/net.sf.j2s.core/dist/swingjs/SwingJS-site.zip
-
-# Copy /tmp/java2script/sources/net.sf.j2s.core/dist/swingjs/j2s.core.jar
-# into $PROVIKOM_ECLIPSE_HOME/dropins/ before building.
-
+python3 tools/swingjs/setup_toolchain.py
 python3 tools/swingjs/build_swingjs_poc.py --require-desktop
 python3 tools/swingjs/verify_swingjs_poc.py
 python3 tools/swingjs/benchmark_swingjs.py --runs 3
 ```
 
+The toolchain is installed under `build/swingjs-toolchain`. The build script
+discovers it automatically; no `/tmp` path or machine-specific environment
+variable is required. Override the destination with `--dest` and pass
+`--toolchain-dir` to the build script if a different location is used.
+
+A clean-destination run downloaded both archives from the pinned URLs, verified
+their hashes, sparse-checked out the exact Java2Script commit, and built and
+verified the artifact without a pre-populated cache. Re-running setup with the
+same pinned manifest reuses the verified archives and extracted trees.
+
 `--require-desktop` needs a display or Xvfb; pass `--xvfb /path/to/Xvfb` when
 needed. The build command above was run successfully on the tested toolchain
 and produced `28,810,518` bytes in `3,730` files.
+
+CI runs the same steps in
+`.github/workflows/swingjs-feasibility.yml`, from a clean checkout, using
+`xvfb-run`. The workflow asserts that the generated JavaScript contains the
+transpiled `SwingPoc` class and the Java state output, then runs browser
+verification and approves only `runtime_verified` evidence.
 
 Project regression checks run for this milestone:
 
@@ -350,6 +439,8 @@ python3 -m unittest discover -s tests -v
 - `docs/verification/swingjs-poc.json` - functional browser evidence.
 - `docs/verification/swingjs-benchmark.json` - three-run benchmark, medians,
   per-run values, network and memory data.
+- `docs/SWINGJS_LICENSING.md` - component-level licensing review.
+- `.github/workflows/swingjs-feasibility.yml` - clean-runner reproduction.
 - `docs/screenshots/swingjs-poc.png` - verified SwingJS POC.
 - `docs/screenshots/swingjs-benchmark.png` - SwingJS benchmark screenshot.
 - `docs/screenshots/cheerpj-benchmark.png` - CheerpJ benchmark screenshot.

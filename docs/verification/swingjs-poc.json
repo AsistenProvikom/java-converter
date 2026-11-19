@@ -13,7 +13,7 @@
       "detail": {
         "width": 720,
         "height": 540,
-        "startup_ms": 1837.9
+        "startup_ms": 2014.2
       }
     },
     {
@@ -21,7 +21,7 @@
       "passed": true,
       "detail": {
         "ticks": 40,
-        "first_state_ms": 2287.4
+        "first_state_ms": 2507.6
       }
     },
     {
@@ -53,7 +53,7 @@
       "name": "keyboard_pause",
       "passed": true,
       "detail": {
-        "ticks": 76
+        "ticks": 75
       }
     },
     {
@@ -65,14 +65,14 @@
     }
   ],
   "metrics": {
-    "startup_ms": 1837.9,
-    "first_state_ms": 2287.4,
+    "startup_ms": 2014.2,
+    "first_state_ms": 2507.6,
     "artifact_size_bytes": 28810518,
-    "network_bytes": 2567371,
+    "network_bytes": 2613071,
     "network_requests": 237,
     "source_modifications_for_swingjs": 0,
     "memory": {
-      "usedJSHeapSize": 18200000,
+      "usedJSHeapSize": 17100000,
       "totalJSHeapSize": 29400000,
       "jsHeapSizeLimit": 3760000000
     }
@@ -84,7 +84,7 @@
   "http_errors": [
     {
       "status": 404,
-      "url": "http://127.0.0.1:18140/swingjs/j2s/core/package.js"
+      "url": "http://127.0.0.1:52654/swingjs/j2s/core/package.js"
     }
   ],
   "warnings": [
@@ -122,5 +122,5 @@
     "log: xhr.open async=false url=swingjs/j2s/javax/swing/Popup.js",
     "log: xhr.open async=false url=swingjs/j2s/javax/swing/JWindow.js"
   ],
-  "generated_at": 1795053210
+  "generated_at": 1795077249
 }
