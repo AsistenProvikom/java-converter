@@ -112,7 +112,11 @@ CI is authoritative when local browser/toolchain dependencies are unavailable.
   - Head at start of MVP work: `6a17f89`
   - Status: OPEN, MERGEABLE, CI green, approval checkpoint only.
 - java-converter MVP branch: `milestone-2c1-swingjs-source-adapter`
-- java-converter PR: created after the first verified MVP commit set.
+- java-converter PR #5: https://github.com/AsistenProvikom/java-converter/pull/5
+- Project 2024 source-publishing PR #2:
+  https://github.com/AsistenProvikom/project-2024/pull/2
+  - Stacked on PR #1; base is `feature/converter-pilot-integration`.
+  - Do not merge before PR #1.
 
 ## Release Readiness Criteria
 

@@ -3,7 +3,9 @@
 Last updated: 2026-11-23
 Active branch: `milestone-2c1-swingjs-source-adapter`
 Base converter commit: `de4a505`
+Converter PR: #5 (this branch)
 Project 2024 PR: #1, head `6a17f89`
+Project 2024 publishing PR: #2, stacked on #1
 
 ## Status Summary
 
