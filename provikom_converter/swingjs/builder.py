@@ -115,10 +115,17 @@ def _safe_name(name: str) -> str:
 
 
 def _copy_project(project: SourceProject, destination: Path) -> None:
-    ignore = shutil.ignore_patterns(
-        ".git", "bin", "site", "classes", "test-classes", "*.class", "__pycache__"
-    )
-    shutil.copytree(str(project.root), str(destination), ignore=ignore)
+    """Stage only inspected Java sources, not unrelated project files.
+
+    This source-backed Java 8 subset expects src/**/*.java only. Copying an
+    entire project would follow otherwise-unchecked non-Java symlinks.
+    """
+    destination.mkdir(parents=True, exist_ok=False)
+    for source in project.java_files:
+        relative = source.relative_to(project.root)
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
 
 
 def _write_eclipse_metadata(project: SourceProject, directory: Path) -> None:
@@ -222,7 +229,7 @@ def _compile_sources(project: SourceProject, toolchain: SwingJSToolchain, work: 
     classes.mkdir(parents=True, exist_ok=True)
     source_files = [str(path) for path in project.java_files]
     _run(
-        [str(toolchain.javac), "--release", "8", "-d", str(classes)] + source_files,
+        [str(toolchain.javac), "--release", "8", "-proc:none", "-d", str(classes)] + source_files,
         log_path=work / "javac-sources.log",
     )
     return classes

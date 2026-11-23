@@ -158,6 +158,17 @@ Examples of actionable errors:
 
 - Source paths, output paths, and symlink components are validated before any
   replacement.
+- The temporary Eclipse workspace copies only inspected `src/**/*.java`
+  files, not the entire input directory. Non-Java files, Git metadata, binary
+  resources and unrelated symlinks are excluded. Additional assets/resources
+  are outside the current supported input contract.
+- Source `javac --release 8 -proc:none` disables annotation processor discovery
+  during the initial Java compilation step.
+- **Trust boundary:** These checks are defense in depth, not an execution
+  sandbox. Native JDK/Eclipse tooling is run and Chromium verification uses
+  `--no-sandbox` in CI. Only process trusted, reviewed Java source in a
+  disposable, isolated worker. Do not expose these CLI commands as a public
+  untrusted-code build service without a separately reviewed sandbox.
 - Runtime ZIP extraction rejects absolute paths and parent traversal.
 - The artifact is validated against source and generated-JavaScript hashes.
 - Generated SwingJS sites stay under ignored `build/` directories and are not

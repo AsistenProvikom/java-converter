@@ -7,6 +7,8 @@ import http.server
 import io
 import json
 import socketserver
+from types import SimpleNamespace
+from unittest.mock import patch
 import tempfile
 import threading
 import time
@@ -29,7 +31,11 @@ from provikom_converter.build_safety import (
 )
 from provikom_converter.cli import main
 from provikom_converter.swingjs import pins
-from provikom_converter.swingjs.builder import build_source_project
+from provikom_converter.swingjs.builder import (
+    _compile_sources,
+    _copy_project,
+    build_source_project,
+)
 from provikom_converter.swingjs.source import (
     SourceProjectError,
     inspect_source_project,
@@ -161,6 +167,42 @@ public class Game { public static void main(String[] args) { } }
         link.symlink_to(project, target_is_directory=True)
         with self.assertRaises(SourceProjectError):
             inspect_source_project(link)
+
+    def test_staging_excludes_non_java_files_and_symlinks(self):
+        project = _write_project(
+            self.tmp / "game",
+            source="package demo; public class Game { public static void main(String[] args) { } }",
+        )
+        (project / "private.txt").write_text("unrelated private data", encoding="utf-8")
+        (project / "src" / "demo" / "asset.bin").write_bytes(b"not supported")
+        (project / ".git").mkdir()
+        (project / ".git" / "config").write_text("private git data", encoding="utf-8")
+        target = self.tmp / "outside.txt"
+        target.write_text("secret", encoding="utf-8")
+        (project / "linked-secret.txt").symlink_to(target)
+
+        inspected = inspect_source_project(project)
+        staged = self.tmp / "staged"
+        _copy_project(inspected, staged)
+        relative_files = sorted(path.relative_to(staged).as_posix()
+                                for path in staged.rglob("*") if path.is_file())
+        self.assertEqual(relative_files, ["src/demo/Game.java"])
+        self.assertFalse((staged / "linked-secret.txt").exists())
+        self.assertTrue((project / "private.txt").is_file())
+
+    def test_compiler_disables_annotation_processing(self):
+        project = _write_project(
+            self.tmp / "game",
+            source="package demo; public class Game { public static void main(String[] args) { } }",
+        )
+        inspected = inspect_source_project(project)
+        toolchain = SimpleNamespace(javac=Path("/pinned/javac"))
+        with patch("provikom_converter.swingjs.builder._run") as run:
+            _compile_sources(inspected, toolchain, self.tmp / "compiler-work")
+        command = run.call_args.args[0]
+        self.assertIn("--release", command)
+        self.assertIn("8", command)
+        self.assertIn("-proc:none", command)
 
 
 class TestSourceOutputSafety(unittest.TestCase):

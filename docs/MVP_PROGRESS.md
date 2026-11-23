@@ -11,13 +11,13 @@ Project 2024 publishing PR: #2, stacked on #1
 
 | Milestone | Status | Evidence / next action |
 |---|---|---|
-| 0 Planning and tracking | IN_PROGRESS | Plan/progress/decisions/blockers created; keep current. |
+| 0 Planning and tracking | VERIFIED | Plan, progress, decisions and blockers committed; refresh at each milestone. |
 | 1 Project 2024 Milestone 3A | VERIFIED | PR #1 CI run `44885053659` passed; awaiting human merge approval. |
-| 2 SwingJS source adapter 2C.1 | VERIFIED | Local build + Chromium verification passed; artifact manifest validates; 119-test local suite: 115 passed, 4 browser tests skipped. Hosted CI pending push. |
+| 2 SwingJS source adapter 2C.1 | VERIFIED | Two fixtures built/verified in Chromium; hosted PR CI passed on previous head f74cfa0 (runs 45107000316/45107000328); fresh hardening CI still required. |
 | 3 Real-project compatibility | VERIFIED | Two independent fixtures (`swing-poc`, `swing-widgets`) built and verified; original project sources remain unavailable (B-001). |
-| 4 Reproducible publishing | VERIFIED (local) | Generated JS is reproducible; SwingJS artifacts are validated no-op inputs to the portal bridge; CheerpJ adaptation remains green (13/13), static 68/68, offline 20/20. CI pending. |
+| 4 Reproducible publishing | VERIFIED | Portal adapter tests 13/13; project-2024 PR #2 hosted offline CI passed (run 45106974783). Not an authorization to publish. |
 | 5 Project 2024 validation 3B | IN_PROGRESS | Matrix added in project-2024 `docs/MILESTONE_5_VALIDATION.md`; generated players and Snake launcher/repaint verified; manual legacy gameplay acceptance remains blocked (B-005). |
-| 6 Security and documentation | IN_PROGRESS | Publishing adapter and evidence docs reviewed; final cross-repository security/doc pass remains. |
+| 6 Security and documentation | IN_PROGRESS | Source-staging whitelist, -proc:none and regression tests added; fresh CI and trust-boundary review required. |
 
 ## Completed Work
 
@@ -101,37 +101,41 @@ Converter (MVP branch):
 - Manifest schema validation passed for both source artifacts and all four demo
   manifests.
 - Python wheel build includes the packaged headless builder plugin sources.
-- Full hosted CI not yet run because changes are not pushed.
+- Hardening: the Eclipse workspace stages only inspected Java sources; `javac --release 8 -proc:none` blocks annotation processor discovery in the initial Java compilation. This is **not a sandbox** for hostile Java projects.
+- Hosted PR CI on the preceding commit `f74cfa0` succeeded: [CI (3/3 jobs)](https://github.com/AsistenProvikom/java-converter/actions/runs/45107000316) and [SwingJS reproduction (1/1 job)](https://github.com/AsistenProvikom/java-converter/actions/runs/45107000328). Fresh head checks must be verified after hardening.
 
-Project 2024 (MVP branch, uncommitted):
+Project 2024 (pushed stacked PR #2, head `79bc7f3`):
 - `python3 tools/test_adaptation.py`: 13/13 passed.
 - `python3 tools/verify_static.py`: 68/68 passed.
 - `python3 tools/verify_offline.py`: 20/20 passed.
 - `python3 tools/adapt_generated_artifact.py --check web-games/car-traffic
   web-games/flappy web-games/paddle-game`: all passed.
-- `python3 tools/verify_pilot.py` against the CheerpJ CDN: 54/54 checks passed;
+- `python3 tools/verify_pilot.py` against the CheerpJ CDN: 54/54 **local** checks passed;
   generated games, Paddle Range dependency, Snake first-input repaint, Stop, and
   Back verified.
 - `python3 tools/adapt_generated_artifact.py --check` also passed against the two
   real local SwingJS source artifacts and a fresh unverified source build.
+- Hosted project-2024 PR #2 CI [run 45106974783](https://github.com/AsistenProvikom/project-2024/actions/runs/45106974783) passed both jobs; PR #1 CI [run 44885053659](https://github.com/AsistenProvikom/project-2024/actions/runs/44885053659) passed both jobs.
 
 ## Current Task
 
-Proceed with Milestone 6 review while Milestone 5 manual acceptance is blocked.
+Complete Milestone 6 hardening while manual legacy acceptance remains blocked.
 
-1. Complete the cross-repository security/documentation pass: path handling,
-   ownership, iframe boundaries, ignored build output, CI/pinning, release gate,
-   and licensing language.
-2. Keep Froggie, Minesweeper, Pong, and Snake gameplay marked as manually
-   unaccepted; Pong audio remains a disclosed limitation.
-3. Run hosted CI only after explicit authorization to commit/push/open PRs.
+1. Run the newly added source-staging and annotation-processing tests and obtain
+   fresh CI results on PR #5; keep browser verification limited to trusted source.
+2. Review PR #5 and PR #1 as separate code-merge decisions. PR #2 is stacked
+   on PR #1; retarget/revalidate it only after the base merges.
+3. Do not enable `PILOT_RELEASE_APPROVED`, publish a SwingJS runtime, or infer
+   student JAR redistribution rights. B-001 through B-005 remain open.
+4. Refresh live status from PRs and CI; do not reuse this dated checkpoint as
+   proof of a later release.
 
 ## Known Failures
 
 - None in the existing CheerpJ path in this session.
 - Local `java` is not on `PATH`; use the pinned toolchain under
   `build/swingjs-toolchain/jdk`.
-- Hosted CI has not run the new source adapter steps yet.
+- Hosted CI for the source adapter passed on prior head `f74cfa0`; inspect current PR head for fresh verification.
 - Phase 3 could not use original project-2024 sources (B-001).
 - Snake now shows a non-blank state after its first center click, but legacy
   gameplay remains unverified; Froggie, Minesweeper, and Pong still need manual
