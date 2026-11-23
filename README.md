@@ -1,10 +1,10 @@
 # Provikom Converter
 
-[![Test Suite](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)]()
+[![Test Suite](https://img.shields.io/badge/tests-115%20passed-brightgreen.svg)]()
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)]()
 
-**Provikom Converter** is an open-source Java game-to-web publishing tool. It analyzes Java game archives (compiled JARs, NetBeans projects) to assess browser compatibility across candidate runtimes and compilers (**CheerpJ**, **TeaVM**, **SwingJS**), and can generate playable CheerpJ 5.0 web artifacts without executing untrusted game code on the host.
+**Provikom Converter** is an open-source Java game-to-web publishing tool. It analyzes Java game archives (compiled JARs, NetBeans projects) to assess browser compatibility across candidate runtimes and compilers (**CheerpJ**, **TeaVM**, **SwingJS**). It can generate playable CheerpJ 5.0 web artifacts from JARs without executing untrusted game code on the host, and can transpile supported Java 8 Swing source projects with the pinned SwingJS/Java2Script toolchain.
 
 ---
 
@@ -26,6 +26,12 @@
 - **Standardized JSON Report Schema**:
   - Conforms to JSON Schema Draft-07 (`schema/compatibility-report.schema.json`).
   - Generates machine-readable JSON and human-readable terminal summaries.
+- **Source-Backed SwingJS Artifact Builder**:
+  - `provikom build-project` validates `src/**/*.java`, selects one Java entry point, compiles with `--release 8`, and transpiles with the pinned Eclipse/Java2Script toolchain.
+  - Produces root-level `index.html` and `manifest.json` with source hashes, generated-JavaScript hashes, toolchain pins, ownership evidence, and lifecycle state.
+  - Normalizes Java2Script timestamps so clean rebuilds produce byte-identical generated JavaScript; artifacts are relative-path safe below a portal subdirectory.
+  - Rejects JavaFX/SWT, missing entry points, symlinked sources, and arbitrary JAR decompilation with actionable diagnostics.
+  - `provikom verify-swingjs` requires real Chromium rendering and input evidence before the artifact can be treated as runtime-verified.
 - **CheerpJ 5.0 Playable Artifact Builder**:
   - One-command generation of a static HTML/CSS/JS game player from an unmodified JAR.
   - Automatic runtime selection: Java 8, Java 21 LTS, or the experimental Java 25 preview target for Java 22 bytecode.
@@ -87,7 +93,7 @@ provikom-converter analyze /path/to/game.jar --json -o report.json
 provikom-converter batch /path/to/games/ -o ./reports
 ```
 
-#### 3. Build a playable web artifact
+#### 3. Build a playable CheerpJ artifact from a JAR
 ```bash
 python3 -m provikom_converter build /path/to/game.jar \
   --backend cheerpj \
@@ -110,14 +116,40 @@ game/
 └── lib/               # staged Class-Path dependencies, when present
 ```
 
-#### 4. Serve the artifact locally
+#### 4. Transpile a supported Java 8 Swing source project
+```bash
+python3 tools/swingjs/setup_toolchain.py
+python3 -m provikom_converter build-project examples/swing-poc \
+  --backend swingjs \
+  --output ./build/swingjs-poc-adapter
+python3 -m provikom_converter verify-swingjs ./build/swingjs-poc-adapter
+```
+
+Source artifacts use a root-level entry point so a static host can serve them from
+any subdirectory:
+
+```text
+build/swingjs-poc-adapter/
+├── index.html
+├── manifest.json
+├── .provikom-artifact.json
+├── swingjs/                 # Pinned SwingJS runtime and generated j2s output
+├── evidence/                # Build logs and source/toolchain hashes
+├── verification.json        # Written after browser verification
+└── verification.png
+```
+
+The source backend does not decompile JARs. See
+[docs/SWINGJS_SOURCE_ADAPTER.md](docs/SWINGJS_SOURCE_ADAPTER.md).
+
+#### 5. Serve an artifact locally
 ```bash
 python3 -m provikom_converter serve ./demo/game --port 8080
 ```
 
 The built-in server supports HTTP Range Requests, which CheerpJ uses to stream JAR data.
 
-#### 5. View JSON Schema specifications
+#### 6. View JSON Schema specifications
 ```bash
 python3 -m provikom_converter schema
 ```
@@ -188,7 +220,7 @@ Evidence records:
 - **Demo game archives are third-party assets.** The MIT license covers the converter source and documentation, not the game JARs and screenshots under `demo/` and `docs/screenshots/`. These assets originate from `AsistenProvikom/project-2024`; no upstream LICENSE or NOTICE file was found during the Milestone 2B audit. Do not redistribute them without permission from the rights holders. For a fully publishable release, replace them with clearly licensed fixtures or remove them.
 - **PongGame audio is a known limitation.** Browser `Clip` support rejects the game's 8-bit mono 44.1 kHz WAV. The player surfaces the Java exception; the artifact is intentionally kept available for debugging.
 - **PaddleGame audio produces a non-fatal diagnostic.** `java.io.IOException: mark/reset not supported` is expected and does not prevent rendering or interaction.
-- **SwingJS/Java2Script artifacts are not release-ready.** Milestone 2C.0 proves a source-backed feasibility path, but Java2Script's GPLv2+Classpath-Exception/EPL/Apache/JSON obligations and runtime notice requirements are unresolved. Generated SwingJS sites remain local/CI test artifacts and must not be published until reviewed. See [docs/SWINGJS_LICENSING.md](docs/SWINGJS_LICENSING.md).
+- **SwingJS/Java2Script artifacts are not release-ready.** The source adapter can produce and verify a browser-playable artifact, but Java2Script's GPLv2+Classpath-Exception/EPL/Apache/JSON obligations and runtime notice requirements are unresolved. Generated SwingJS sites remain local/CI test artifacts and must not be published until reviewed. See [docs/SWINGJS_LICENSING.md](docs/SWINGJS_LICENSING.md).
 
 ---
 
@@ -223,17 +255,19 @@ provikom-converter/
 │   │   └── teavm.py
 │   ├── orchestration/          # End-to-end analysis pipeline
 │   │   └── pipeline.py
+│   ├── swingjs/                # Source validation, pinned toolchain, builder, browser verifier
 │   ├── artifacts/              # Report builder & serializer
 │   │   └── report.py
 │   ├── build_safety.py         # Validated, transactional artifact publishing
 │   ├── lifecycle.py            # Lifecycle states and verification evidence
 │   ├── server.py               # Range-Request HTTP server for artifacts
-│   └── cli.py                  # CLI commands (analyze, build, serve, batch, schema)
+│   └── cli.py                  # CLI commands (analyze, build, build-project, serve, batch, schema)
 ├── .github/workflows/
 │   ├── ci.yml                  # Hosted CI with pinned fixtures and browser job
 │   └── swingjs-feasibility.yml # Pinned SwingJS transpile/verify reproduction
 ├── demo/                       # Generated playable web artifacts
-├── examples/swing-poc/         # Java 8 Swing feasibility POC and desktop smoke test
+├── examples/swing-poc/         # Java 8 Swing POC: timer, keyboard, reset
+├── examples/swing-widgets/     # Second fixture: layout, JButton/JLabel, mouse, timer
 ├── tools/swingjs/              # Pinned toolchain setup, build, verify, benchmark
 ├── docs/
 │   ├── ARCHITECTURE.md         # Full architecture and threat model
@@ -243,6 +277,12 @@ provikom-converter/
 │   ├── MILESTONE_2A_REPORT.md  # CheerpJ builder results
 │   ├── MILESTONE_2B_REPORT.md  # Hardening, CI, and verification evidence
 │   ├── MILESTONE_2C_FEASIBILITY.md  # SwingJS/Java2Script feasibility findings
+│   ├── SWINGJS_SOURCE_ADAPTER.md    # Source adapter contract and usage
+│   ├── MILESTONE_3_COMPATIBILITY.md # Two-fixture compatibility results
+│   ├── MVP_EXECUTION_PLAN.md
+│   ├── MVP_PROGRESS.md
+│   ├── MVP_DECISIONS.md
+│   ├── MVP_BLOCKERS.md
 │   ├── SWINGJS_LICENSING.md    # Java2Script runtime/output licensing review
 │   ├── verification/           # Runtime verification records
 │   └── screenshots/            # Browser verification evidence

@@ -33,8 +33,18 @@ class TestSchemaValidation(unittest.TestCase):
         self.assertIn("ownership", manifest_schema["properties"])
         self.assertNotIn("ownership", manifest_schema["required"])
         conditionals = manifest_schema["allOf"]
-        self.assertEqual(conditionals[0]["if"]["properties"]["schema_version"]["const"], "1.1")
-        self.assertIn("lifecycle", conditionals[0]["then"]["required"])
+        lifecycle_condition = next(
+            item for item in conditionals
+            if item["if"].get("properties", {}).get("schema_version", {}).get("const") == "1.1"
+        )
+        self.assertIn("lifecycle", lifecycle_condition["then"]["required"])
+        backends = {
+            item["if"]["properties"]["backend"]["const"]: item
+            for item in conditionals
+            if "backend" in item["if"].get("properties", {})
+        }
+        self.assertIn("source_project", backends["swingjs"]["then"]["required"])
+        self.assertIn("jar_file", backends["cheerpj"]["then"]["required"])
         states = manifest_schema["definitions"]["lifecycle"]["properties"]["state"]["enum"]
         self.assertIn("runtime_verified", states)
         self.assertIn("failed", states)

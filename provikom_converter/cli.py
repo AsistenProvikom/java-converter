@@ -14,8 +14,16 @@ from provikom_converter.adapters.base import (
     UnsupportedRuntimeError,
 )
 from provikom_converter.analyzer.archive import ArchiveSecurityError
+from provikom_converter.build_safety import BuildPathError
 from provikom_converter.orchestration.pipeline import ConverterPipeline
 from provikom_converter.server import run_server
+from provikom_converter.swingjs import (
+    SwingJSBuildError,
+    SwingJSToolchainError,
+    SwingJSVerifyError,
+    build_source_project,
+    verify_artifact,
+)
 from provikom_converter.version import __version__
 
 
@@ -163,6 +171,89 @@ def run_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_build_project(args: argparse.Namespace) -> int:
+    source = Path(args.source_directory)
+    if not source.exists():
+        print(f"Error: Source directory '{source}' does not exist.", file=sys.stderr)
+        return 1
+    if not source.is_dir():
+        print(f"Error: Source path '{source}' is not a directory.", file=sys.stderr)
+        return 1
+
+    try:
+        print(f"Building SwingJS source project '{source.name}'...")
+        result = build_source_project(
+            source,
+            Path(args.output),
+            title=args.title,
+            main_class=args.main_class,
+            force_overwrite=args.force,
+            toolchain_dir=args.toolchain_dir,
+            java_home=args.java_home,
+            eclipse_home=args.eclipse_home,
+            site_zip=args.site_zip,
+        )
+    except (SwingJSBuildError, SwingJSToolchainError, BuildPathError) as e:
+        print(f"Build failed: {e}", file=sys.stderr)
+        return 1
+    except FileExistsError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+    print("\n" + "=" * 68)
+    print("  SWINGJS BUILD SUCCESSFUL")
+    print("=" * 68)
+    print(f"  Game Title:        {result.game_title}")
+    print(f"  Main Class:        {result.metadata.get('game', {}).get('main_class')}")
+    print(f"  Generated JS:      {result.metadata.get('generated_js')}")
+    print(f"  Output Directory:  {result.output_directory}")
+    print(f"  Entry Point HTML:  {result.entry_html}")
+    notes = result.metadata.get("notes", [])
+    if notes:
+        print("-" * 68)
+        print("  NOTES:")
+        for note in notes:
+            print(f"    * {note}")
+    print("-" * 68)
+    print("  Verify the runtime before publishing:")
+    print(f"    provikom verify-swingjs {result.output_directory}")
+    print("=" * 68)
+    return 0
+
+
+def run_verify_swingjs(args: argparse.Namespace) -> int:
+    artifact = Path(args.artifact_directory)
+    if not artifact.exists():
+        print(f"Error: Artifact directory '{artifact}' does not exist.", file=sys.stderr)
+        return 1
+    try:
+        record = verify_artifact(
+            artifact,
+            evidence=args.evidence,
+            screenshot=args.screenshot,
+        )
+    except SwingJSVerifyError as e:
+        print(f"Verification failed: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Verification failed: {e}", file=sys.stderr)
+        return 1
+
+    print("\n" + "=" * 68)
+    print("  SWINGJS RUNTIME VERIFIED")
+    print("=" * 68)
+    print(f"  Artifact:          {artifact.resolve()}")
+    print(f"  State:             {record.get('state')}")
+    print(f"  Duration:          {record.get('duration_seconds', 0):.2f}s")
+    for check in record.get("checks", []):
+        print(f"    [PASS] {check.get('name')}")
+    screenshots = record.get("screenshots", [])
+    if screenshots:
+        print(f"  Screenshot:        {screenshots[0]}")
+    print("=" * 68)
+    return 0
+
+
 def run_serve(args: argparse.Namespace) -> int:
     target = Path(args.directory)
     if not target.exists():
@@ -272,6 +363,36 @@ def main(argv: Optional[List[str]] = None) -> int:
     build_parser.add_argument("--title", help="Custom game title (defaults to JAR basename)")
     build_parser.add_argument("-f", "--force", action="store_true", help="Replace an existing Provikom artifact directory (unrelated data is refused)")
 
+    # build-project
+    project_parser = subparsers.add_parser(
+        "build-project",
+        help="Transpile a Java 8 Swing source project with the pinned SwingJS toolchain",
+    )
+    project_parser.add_argument("source_directory", help="Directory containing src/**/*.java")
+    project_parser.add_argument(
+        "--backend",
+        default="swingjs",
+        choices=["swingjs"],
+        help="Source transpiler backend (default and only supported value: swingjs)",
+    )
+    project_parser.add_argument("-o", "--output", required=True, help="Destination artifact directory")
+    project_parser.add_argument("--title", help="Custom game title (defaults to project directory name)")
+    project_parser.add_argument("--main-class", help="Fully qualified main class when the project has several")
+    project_parser.add_argument("-f", "--force", action="store_true", help="Replace an existing Provikom artifact directory")
+    project_parser.add_argument("--toolchain-dir", help="Managed toolchain directory (default: build/swingjs-toolchain)")
+    project_parser.add_argument("--java-home", help="Explicit JDK 17+ home inside the pinned toolchain")
+    project_parser.add_argument("--eclipse-home", help="Explicit Eclipse home inside the pinned toolchain")
+    project_parser.add_argument("--site-zip", help="Explicit pinned SwingJS-site.zip")
+
+    # verify-swingjs
+    verify_parser = subparsers.add_parser(
+        "verify-swingjs",
+        help="Verify a source-backed SwingJS artifact in headless Chromium",
+    )
+    verify_parser.add_argument("artifact_directory", help="Directory containing index.html and manifest.json")
+    verify_parser.add_argument("--evidence", help="Write runtime evidence JSON to this path")
+    verify_parser.add_argument("--screenshot", help="Write the full-page screenshot to this path")
+
     # serve
     serve_parser = subparsers.add_parser("serve", help="Serve a web artifact with HTTP Range Request support")
     serve_parser.add_argument("directory", help="Directory containing the built web artifact")
@@ -294,6 +415,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         return run_analyze(args)
     elif args.command == "build":
         return run_build(args)
+    elif args.command == "build-project":
+        return run_build_project(args)
+    elif args.command == "verify-swingjs":
+        return run_verify_swingjs(args)
     elif args.command == "serve":
         return run_serve(args)
     elif args.command == "batch":

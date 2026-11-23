@@ -31,6 +31,7 @@ from provikom_converter.adapters.base import (
 )
 from provikom_converter.adapters.cheerpj import CheerpJAdapter, select_cheerpj_runtime
 from provikom_converter.adapters.swingjs import SwingJSAdapter
+from provikom_converter.adapters.base import UnsupportedRuntimeError
 from provikom_converter.adapters.teavm import TeaVMAdapter
 from provikom_converter.orchestration.pipeline import ConverterPipeline
 from provikom_converter.server import RangeRequestHandler
@@ -289,9 +290,10 @@ class TestAdapterContract(unittest.TestCase):
 
     def test_other_backends_are_not_implemented_yet(self):
         options = BuildOptions(output_directory="/tmp/x")
-        for adapter in (TeaVMAdapter(), SwingJSAdapter()):
-            with self.assertRaises(NotImplementedError):
-                adapter.generate_artifact(None, options)
+        with self.assertRaises(NotImplementedError):
+            TeaVMAdapter().generate_artifact(None, options)
+        with self.assertRaises(UnsupportedRuntimeError):
+            SwingJSAdapter().generate_artifact(None, options)
 
 
 class TestRangeRequestServer(unittest.TestCase):

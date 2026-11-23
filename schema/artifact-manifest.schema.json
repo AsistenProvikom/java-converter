@@ -8,139 +8,567 @@
     "schema_version",
     "generated_at",
     "backend",
-    "runtime_version",
     "entry_point",
-    "jar_file",
-    "java_major_version",
     "game",
     "compatibility",
     "paths",
-    "dependencies",
     "notes",
     "generated_files"
   ],
   "allOf": [
     {
       "if": {
-        "properties": { "schema_version": { "const": "1.1" } },
-        "required": ["schema_version"]
+        "properties": {
+          "schema_version": {
+            "const": "1.1"
+          }
+        },
+        "required": [
+          "schema_version"
+        ]
       },
-      "then": { "required": ["lifecycle"] }
+      "then": {
+        "required": [
+          "lifecycle"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "backend": {
+            "const": "cheerpj"
+          }
+        },
+        "required": [
+          "backend"
+        ]
+      },
+      "then": {
+        "required": [
+          "runtime_version",
+          "jar_file",
+          "java_major_version"
+        ],
+        "properties": {
+          "game": {
+            "required": [
+              "jar_file",
+              "sha256",
+              "size_bytes",
+              "java_version",
+              "gui_apis",
+              "audio_apis"
+            ]
+          },
+          "paths": {
+            "required": [
+              "main_jar",
+              "main_jar_virtual_path",
+              "class_path"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "backend": {
+            "const": "swingjs"
+          }
+        },
+        "required": [
+          "backend"
+        ]
+      },
+      "then": {
+        "required": [
+          "runtime",
+          "source_project",
+          "toolchain"
+        ],
+        "properties": {
+          "game": {
+            "required": [
+              "main_class",
+              "has_audio",
+              "java_major_version"
+            ]
+          },
+          "paths": {
+            "required": [
+              "entry",
+              "generated_js",
+              "web_root",
+              "virtual_mount_root"
+            ]
+          }
+        }
+      }
     }
   ],
   "properties": {
-    "schema_version": { "type": "string", "enum": ["1.0", "1.1"] },
-    "generated_at": { "type": "string", "format": "date-time" },
-    "provikom_converter_version": { "type": "string" },
-    "backend": { "type": "string" },
-    "backend_display_name": { "type": "string" },
-    "runtime_version": { "type": "integer" },
-    "is_experimental": { "type": "boolean" },
-    "runtime": {
-      "type": "object",
-      "required": ["version", "label", "experimental", "selection_reason"],
-      "properties": {
-        "version": { "type": "integer" },
-        "label": { "type": "string" },
-        "experimental": { "type": "boolean" },
-        "selection_reason": { "type": "string" }
-      }
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "1.0",
+        "1.1"
+      ]
     },
-    "entry_point": { "type": "string" },
-    "jar_file": { "type": "string" },
-    "java_major_version": { "type": "integer" },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provikom_converter_version": {
+      "type": "string"
+    },
+    "backend": {
+      "type": "string"
+    },
+    "backend_display_name": {
+      "type": "string"
+    },
+    "runtime_version": {
+      "type": "integer"
+    },
+    "is_experimental": {
+      "type": "boolean"
+    },
+    "runtime": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "version",
+            "label",
+            "experimental",
+            "selection_reason"
+          ],
+          "properties": {
+            "version": {
+              "type": "integer"
+            },
+            "label": {
+              "type": "string"
+            },
+            "experimental": {
+              "type": "boolean"
+            },
+            "selection_reason": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "$ref": "#/definitions/sourceRuntime"
+        }
+      ]
+    },
+    "entry_point": {
+      "type": "string"
+    },
+    "jar_file": {
+      "type": "string"
+    },
+    "java_major_version": {
+      "type": "integer"
+    },
     "game": {
       "type": "object",
-      "required": ["title", "jar_file", "sha256", "size_bytes", "main_class", "java_major_version", "java_version", "has_audio", "gui_apis", "audio_apis"],
+      "required": [
+        "title",
+        "main_class",
+        "has_audio",
+        "java_major_version"
+      ],
       "properties": {
-        "title": { "type": "string" },
-        "jar_file": { "type": "string" },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "size_bytes": { "type": "integer", "minimum": 0 },
-        "main_class": { "type": ["string", "null"] },
-        "entry_point_source": { "type": "string" },
-        "entry_point_candidates": { "type": "array", "items": { "type": "string" } },
-        "java_major_version": { "type": "integer" },
-        "java_version": { "type": "string" },
-        "has_audio": { "type": "boolean" },
-        "gui_apis": { "type": "array", "items": { "type": "string" } },
-        "audio_apis": { "type": "array", "items": { "type": "string" } }
+        "title": {
+          "type": "string"
+        },
+        "jar_file": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "main_class": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entry_point_source": {
+          "type": "string"
+        },
+        "entry_point_candidates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "java_major_version": {
+          "type": "integer"
+        },
+        "java_version": {
+          "type": "string"
+        },
+        "has_audio": {
+          "type": "boolean"
+        },
+        "gui_apis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audio_apis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "compatibility": {
       "type": "object",
       "description": "Static prediction only. Never rewritten by runtime verification.",
-      "required": ["status", "summary"],
+      "required": [
+        "status",
+        "summary"
+      ],
       "properties": {
-        "status": { "type": "string" },
-        "summary": { "type": "string" },
-        "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 },
-        "verified_capabilities": { "type": "array", "items": { "type": "string" } },
-        "assumptions_and_risks": { "type": "array", "items": { "type": "string" } },
-        "blockers": { "type": "array", "items": { "type": "string" } },
-        "workarounds_needed": { "type": "array", "items": { "type": "string" } },
-        "remediation_steps": { "type": "array", "items": { "type": "string" } }
+        "status": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verified_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "assumptions_and_risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blockers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workarounds_needed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "remediation_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "paths": {
       "type": "object",
-      "required": ["web_root", "virtual_mount_root", "main_jar", "main_jar_virtual_path", "class_path"],
+      "required": [
+        "web_root",
+        "virtual_mount_root"
+      ],
       "properties": {
-        "web_root": { "type": "string" },
-        "virtual_mount_root": { "type": "string" },
-        "main_jar": { "type": "string" },
-        "main_jar_virtual_path": { "type": "string" },
-        "class_path": { "type": "array", "items": { "type": "string" } }
+        "web_root": {
+          "type": "string"
+        },
+        "virtual_mount_root": {
+          "type": "string"
+        },
+        "main_jar": {
+          "type": "string"
+        },
+        "main_jar_virtual_path": {
+          "type": "string"
+        },
+        "class_path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "dependencies": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["relative_path", "virtual_path", "size_bytes", "sha256"],
+        "required": [
+          "relative_path",
+          "virtual_path",
+          "size_bytes",
+          "sha256"
+        ],
         "properties": {
-          "relative_path": { "type": "string" },
-          "virtual_path": { "type": "string" },
-          "size_bytes": { "type": "integer", "minimum": 0 },
-          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          "relative_path": {
+            "type": "string"
+          },
+          "virtual_path": {
+            "type": "string"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     },
-    "notes": { "type": "array", "items": { "type": "string" } },
-    "generated_files": { "type": "array", "items": { "type": "string" } },
-    "ownership": {
-      "type": "object",
-      "required": ["owner", "artifact_id", "marker"],
-      "properties": {
-        "owner": { "type": "string", "enum": ["provikom-converter"] },
-        "artifact_id": { "type": "string", "minLength": 1 },
-        "marker": { "type": "string", "enum": [".provikom-artifact.json"] }
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
-    "lifecycle": { "$ref": "#/definitions/lifecycle" }
+    "generated_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "required": [
+        "owner",
+        "artifact_id",
+        "marker"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "enum": [
+            "provikom-converter"
+          ]
+        },
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "marker": {
+          "type": "string",
+          "enum": [
+            ".provikom-artifact.json"
+          ]
+        }
+      }
+    },
+    "lifecycle": {
+      "$ref": "#/definitions/lifecycle"
+    },
+    "source_project": {
+      "$ref": "#/definitions/sourceProject"
+    },
+    "toolchain": {
+      "$ref": "#/definitions/toolchain"
+    }
   },
   "definitions": {
     "lifecycle": {
       "type": "object",
-      "required": ["state", "prediction_only", "execution_verified", "source"],
+      "required": [
+        "state",
+        "prediction_only",
+        "execution_verified",
+        "source"
+      ],
       "properties": {
         "state": {
           "type": "string",
-          "enum": ["analyzed", "candidate", "built", "runtime_verified", "failed", "unsupported"]
+          "enum": [
+            "analyzed",
+            "candidate",
+            "built",
+            "runtime_verified",
+            "failed",
+            "unsupported"
+          ]
         },
-        "prediction_only": { "type": "boolean" },
-        "execution_verified": { "type": "boolean" },
-        "source": { "type": "string" },
+        "prediction_only": {
+          "type": "boolean"
+        },
+        "execution_verified": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
         "verification": {
           "type": "object",
           "properties": {
-            "state": { "type": "string", "enum": ["not_run", "runtime_verified", "failed"] },
-            "automated": { "type": "boolean" },
-            "manual": { "type": "boolean" },
-            "record": { "type": "string" },
-            "screenshots": { "type": "array", "items": { "type": "string" } },
-            "console_errors": { "type": "array", "items": { "type": "string" } }
+            "state": {
+              "type": "string",
+              "enum": [
+                "not_run",
+                "runtime_verified",
+                "failed"
+              ]
+            },
+            "automated": {
+              "type": "boolean"
+            },
+            "manual": {
+              "type": "boolean"
+            },
+            "record": {
+              "type": "string"
+            },
+            "screenshots": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "console_errors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
+        }
+      }
+    },
+    "sourceRuntime": {
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "compiler_version",
+        "offline_capable",
+        "license_review_required"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "compiler_version": {
+          "type": "string"
+        },
+        "offline_capable": {
+          "type": "boolean"
+        },
+        "license_review_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sourceProject": {
+      "type": "object",
+      "required": [
+        "name",
+        "main_class",
+        "source_sha256",
+        "source_file_count",
+        "files",
+        "generated_js",
+        "generated_js_sha256"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "main_class": {
+          "type": "string"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_file_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        },
+        "generated_js": {
+          "type": "string"
+        },
+        "generated_js_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "entry_template": {
+          "type": "string"
+        }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "required": [
+        "jdk_version",
+        "eclipse_version",
+        "java2script_commit",
+        "java2script_compiler_sha256",
+        "swingjs_runtime_sha256"
+      ],
+      "properties": {
+        "jdk_version": {
+          "type": "string"
+        },
+        "eclipse_version": {
+          "type": "string"
+        },
+        "java2script_commit": {
+          "type": "string"
+        },
+        "java2script_compiler_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "swingjs_runtime_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "managed": {
+          "type": "boolean"
         }
       }
     }

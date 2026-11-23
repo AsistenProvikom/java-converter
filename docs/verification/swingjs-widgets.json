@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-11-23T00:55:36Z",
+  "game": "SwingJS Widgets Compatibility",
+  "artifact": "build/swingjs-widgets",
+  "state": "runtime_verified",
+  "prediction_only": false,
+  "execution_verified": true,
+  "automated": true,
+  "manual": false,
+  "checks": [
+    {
+      "name": "canvas_mounted",
+      "passed": true,
+      "detail": {
+        "width": 800,
+        "height": 600,
+        "startup_ms": 3334.5
+      }
+    },
+    {
+      "name": "graphics_rendered",
+      "passed": true,
+      "detail": {
+        "unique_colors": 989.0,
+        "luminance_stddev": 55.552104418663696,
+        "non_dark_ratio": 1.0
+      }
+    },
+    {
+      "name": "generated_javascript_loaded",
+      "passed": true,
+      "detail": "swingjs/j2s/compat/WidgetDemo.js"
+    },
+    {
+      "name": "swing_timer_animates",
+      "passed": true,
+      "detail": {
+        "ticks": 60
+      }
+    },
+    {
+      "name": "mouse_click_responds",
+      "passed": true,
+      "detail": {
+        "clicks": 1
+      }
+    }
+  ],
+  "screenshots": [
+    "verification.png"
+  ],
+  "console_errors": [],
+  "runtime_diagnostics": [],
+  "notes": [
+    "SwingJS requested an absent core/package.js; this is a non-fatal loader warning."
+  ],
+  "duration_seconds": 5.864,
+  "source_sha256": "3d2d7143000591440f73492aa5916710cbd6e9793dc905ee8fef1cef92be4aea",
+  "generated_js_sha256": "c17e964473a8b586cfa9ee2d585e3b7d81fcbba84139fa1cbf6de65b3ddbeae8",
+  "metrics": {
+    "startup_ms": 3334.5,
+    "network_bytes": 2816503,
+    "network_requests": 262,
+    "memory": {
+      "usedJSHeapSize": 21700000,
+      "totalJSHeapSize": 33100000,
+      "jsHeapSizeLimit": 3760000000
+    }
+  },
+  "http_errors": [
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:45613/swingjs/j2s/core/package.js"
+    }
+  ],
+  "console_tail": [
+    "log: xhr.open async=false url=swingjs/j2s/java/util/regex/Pattern.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/util/regex/Matcher.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/util/regex/MatchResult.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/plaf/JSGraphicsUtils.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/font/FontDesignMetrics.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/FontMetrics.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/font/FontRenderContext.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/ComponentEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/plaf/Resizer.js",
+    "log: xhr.open async=false url=swingjs/j2s/javajs/api/js/HTML5Applet.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/plaf/JSPopupMenuUI.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/jquery/JQueryUI.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/WindowEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/GraphicsCallback.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/awt/SunGraphicsCallback.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/geom/RoundRectangle2D.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/geom/RoundRectIterator.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/geom/PathIterator.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/awt/CausedFocusEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/FocusEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/util/TimSort.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/util/ListIterator.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/ActionEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/SentEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/sun/awt/EventQueueItem.js",
+    "log: xhr.open async=false url=swingjs/j2s/swingjs/JSMouse.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/MouseEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/event/InputEvent.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/Point.js",
+    "log: xhr.open async=false url=swingjs/j2s/java/awt/geom/Point2D.js"
+  ],
+  "body_text_tail": " is 1.0\nFIXTURE ticks=0 clicks=0 phase=0.000 running=true\nJSWindowUI windowActivated javax.swing.JFrame[frame0912,parent:null,40,40,800x620,layout=java.awt.BorderLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=0,maximumSize=,minimumSize=,preferredSize=,title=Provikom SwingJS Widget Fixture,resizable,normal,defaultCloseOperation=EXIT_ON_CLOSE,rootPane=javax.swing.JRootPane[testApplet_Frame11.JRootPane931,parent:frame0,0,20,800x600,layout=javax.swing.JRootPane$RootLayout,alignmentX=0.0,alignmentY=0.0,border=,flags=16777224,maximumSize=,minimumSize=,preferredSize=],rootPaneCheckingEnabled=true]\nFIXTURE ticks=20 clicks=0 phase=0.700 running=true\nFIXTURE ticks=40 clicks=0 phase=1.400 running=true\nFIXTURE ticks=60 clicks=0 phase=2.100 running=true\nFIXTURE ticks=61 clicks=1 phase=2.935 running=true\nThis is System.out. clear it start/stop profiling\nsee ___j2sflags.htm for SwingJS URL command-line options\nget _j2sClassList.txt\nProvikom SwingJS Widget Fixture\nX\nPause\nclick\u00a0\u00a0ticks=61\u00a0\u00a0clicks=1"
+}

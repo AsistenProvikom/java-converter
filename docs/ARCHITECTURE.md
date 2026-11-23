@@ -205,7 +205,9 @@ JAR -> SafeArchiveReader -> ClassFileReader -> FeatureDetector
     -> static web bundle + manifest.json
 ```
 
-Only `CheerpJAdapter` implements `generate_artifact()` in Milestone 2A. `TeaVMAdapter` and `SwingJSAdapter` satisfy the interface but raise `NotImplementedError` so unsupported backends cannot silently produce incomplete bundles.
+`CheerpJAdapter` implements JAR artifact generation. `TeaVMAdapter` still
+raises `NotImplementedError`. `SwingJSAdapter` requires source input and directs
+callers to `provikom build-project`; it never claims JAR decompilation.
 
 ### 8.2 Generated Artifact Model
 
@@ -344,7 +346,9 @@ Strict mode is required in CI:
 - **Java 22:** requires the experimental Java 25 preview runtime.
 - **CheerpJ:** is proprietary and requires CDN access unless a vendor-supported self-hosted/enterprise package is used.
 - **Startup latency:** large archives can take roughly 15 seconds to mount a canvas in headless Chromium.
-- **Milestone scope:** TeaVM and SwingJS artifact generation remain unimplemented.
+- **Milestone scope:** TeaVM artifact generation remains unimplemented. SwingJS
+  is implemented only for validated Java 8 Swing source through the pinned
+  Java2Script toolchain; JAR inputs are not decompiled.
 
 ---
 

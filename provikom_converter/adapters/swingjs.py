@@ -11,6 +11,7 @@ from provikom_converter.adapters.base import (
     ConversionOptions,
     ConversionPlan,
     ConversionStep,
+    UnsupportedRuntimeError,
 )
 from provikom_converter.analyzer.archive import ArchiveInventory
 from provikom_converter.analyzer.compatibility import (
@@ -62,37 +63,52 @@ class SwingJSAdapter(BackendAdapter):
     ) -> ConversionPlan:
         eval_result = self.evaluate_compatibility(inventory, features, class_major_versions)
         
-        # When only JAR is available, decompilation is required
         steps: List[ConversionStep] = [
             ConversionStep(
-                name="Decompile JAR to Java Source",
-                description="Use CFR or Fernflower decompiler to extract .java source files from untrusted JAR.",
+                name="Validate Java source project",
+                description=(
+                    "Inspect src/**/*.java, select one main class, and reject "
+                    "unsupported dependencies, symlinks, and non-Java 8 source."
+                ),
                 automated=True,
             ),
             ConversionStep(
-                name="Java Version Retargeting",
-                description="Verify decompiled source conforms to Java 8/11 language syntax accepted by SwingJS.",
+                name="Compile source with release 8",
+                description="Compile the original Java source with the pinned JDK 17 javac --release 8.",
                 automated=True,
-                requires_user_input=False,
             ),
             ConversionStep(
                 name="Transpile with Java2Script",
-                description="Run Java2Script compiler to generate SwingJS JavaScript files (.js).",
+                description=(
+                    "Run the pinned Eclipse/Java2Script compiler and require "
+                    "generated JavaScript for the selected main class."
+                ),
                 automated=True,
             ),
             ConversionStep(
-                name="Bundle SwingJS Runtime",
-                description="Include swingjs2.js and Java 8 Swing core JavaScript emulation library.",
+                name="Package offline SwingJS artifact",
+                description="Copy the pinned SwingJS runtime and write index.html, manifest, and ownership evidence.",
                 automated=True,
+            ),
+            ConversionStep(
+                name="Verify in Chromium",
+                description="Run provikom verify-swingjs and require runtime evidence before publication.",
+                automated=True,
+                requires_user_input=False,
             ),
         ]
 
         return ConversionPlan(
             backend_id=self.backend_id,
-            is_feasible=True,
+            is_feasible=bool(eval_result.status != CompatibilityStatus.UNSUPPORTED),
             summary=eval_result.summary,
             steps=steps,
-            required_tools=["cfr-decompiler", "java2script", "node"],
+            required_tools=[
+                "pinned-jdk-17",
+                "eclipse-2024-03",
+                "java2script-5.0.1-v7",
+                "swingjs-runtime",
+            ],
             estimated_difficulty="high",
         )
 
@@ -101,7 +117,11 @@ class SwingJSAdapter(BackendAdapter):
         analysis_result: Any,
         options: BuildOptions,
     ) -> BuildResult:
-        raise NotImplementedError("SwingJS source transpilation artifact generation is scheduled for future milestones.")
+        raise UnsupportedRuntimeError(
+            "SwingJS requires Java source input. Use `provikom build-project "
+            "<source-directory> --output <directory>`; JAR decompilation is not "
+            "supported."
+        )
 
     def get_runtime_dependencies(self) -> List[str]:
         return [
