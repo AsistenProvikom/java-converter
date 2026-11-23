@@ -103,6 +103,78 @@ jobs:
           print("Network bytes:", evidence["metrics"]["network_bytes"])
           PY
 
+      - name: Build the POC through the production source adapter
+        run: >
+          xvfb-run -a --server-args="-screen 0 1280x900x24"
+          python3 -m provikom_converter build-project examples/swing-poc
+          --backend swingjs
+          --output build/swingjs-adapter-poc
+          --title "SwingJS Adapter POC"
+          --toolchain-dir build/swingjs-toolchain
+          --force
+
+      - name: Verify the production adapter artifact in Chromium
+        run: >
+          python3 -m provikom_converter verify-swingjs
+          build/swingjs-adapter-poc
+          --evidence build/swingjs-adapter-poc/verification.json
+          --screenshot build/swingjs-adapter-poc/verification.png
+
+      - name: Assert source adapter manifest and ownership
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from provikom_converter.build_safety import _is_provikom_artifact
+          artifact = Path("build/swingjs-adapter-poc")
+          manifest = json.loads((artifact / "manifest.json").read_text())
+          assert manifest["backend"] == "swingjs", manifest["backend"]
+          assert manifest["source_project"]["main_class"] == "poc.SwingPoc"
+          assert manifest["source_project"]["source_file_count"] == 1
+          assert manifest["lifecycle"]["state"] == "runtime_verified", manifest["lifecycle"]
+          assert _is_provikom_artifact(artifact), "ownership marker validation failed"
+          evidence = json.loads((artifact / "verification.json").read_text())
+          checks = {check["name"]: check["passed"] for check in evidence["checks"]}
+          required = {
+              "canvas_mounted",
+              "graphics_rendered",
+              "generated_javascript_loaded",
+              "swing_timer_animates",
+              "keyboard_horizontal",
+              "keyboard_vertical",
+              "keyboard_pause",
+              "keyboard_reset",
+          }
+          missing = sorted(required - set(checks))
+          assert not missing, "Missing checks: {}".format(missing)
+          failed = sorted(name for name, passed in checks.items() if not passed)
+          assert not failed, "Failed checks: {}".format(failed)
+          print("Source adapter state:", manifest["lifecycle"]["state"])
+          print("Generated JS:", manifest["source_project"]["generated_js"])
+          PY
+
+      - name: Build and verify the second source fixture
+        run: |
+          xvfb-run -a --server-args="-screen 0 1280x900x24" python3 -m provikom_converter build-project examples/swing-widgets --backend swingjs --output build/swingjs-widgets --title "SwingJS Widgets" --toolchain-dir build/swingjs-toolchain --force
+          python3 -m provikom_converter verify-swingjs build/swingjs-widgets --evidence build/swingjs-widgets/verification.json --screenshot build/swingjs-widgets/verification.png
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from provikom_converter.build_safety import _is_provikom_artifact
+          artifact = Path("build/swingjs-widgets")
+          manifest = json.loads((artifact / "manifest.json").read_text())
+          assert manifest["backend"] == "swingjs"
+          assert manifest["source_project"]["main_class"] == "compat.WidgetDemo"
+          assert manifest["lifecycle"]["state"] == "runtime_verified"
+          assert _is_provikom_artifact(artifact)
+          evidence = json.loads((artifact / "verification.json").read_text())
+          checks = {check["name"]: check["passed"] for check in evidence["checks"]}
+          for name in ("canvas_mounted", "graphics_rendered", "generated_javascript_loaded",
+                       "swing_timer_animates", "mouse_click_responds"):
+              assert checks.get(name), name
+          print("Second fixture state:", manifest["lifecycle"]["state"])
+          PY
+
       - name: Upload SwingJS diagnostics and evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,5 +191,19 @@ jobs:
             build/swingjs-poc/verification.png
             build/swingjs-poc/site/poc_SwingPoc.html
             build/swingjs-poc/site/swingjs/j2s/poc/SwingPoc.js
+            build/swingjs-adapter-poc/manifest.json
+            build/swingjs-adapter-poc/index.html
+            build/swingjs-adapter-poc/evidence/build.json
+            build/swingjs-adapter-poc/evidence/*.log
+            build/swingjs-adapter-poc/verification.json
+            build/swingjs-adapter-poc/verification.png
+            build/swingjs-adapter-poc/swingjs/j2s/poc/SwingPoc.js
+            build/swingjs-widgets/manifest.json
+            build/swingjs-widgets/index.html
+            build/swingjs-widgets/evidence/build.json
+            build/swingjs-widgets/evidence/*.log
+            build/swingjs-widgets/verification.json
+            build/swingjs-widgets/verification.png
+            build/swingjs-widgets/swingjs/j2s/compat/WidgetDemo.js
           if-no-files-found: warn
           retention-days: 14
