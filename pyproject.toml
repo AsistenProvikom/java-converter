@@ -32,3 +32,10 @@ browser = [
     "playwright>=1.40",
     "Pillow>=10",
 ]
+
+[tool.setuptools.package-data]
+provikom_converter = [
+    "swingjs/headless_builder/plugin.xml",
+    "swingjs/headless_builder/META-INF/MANIFEST.MF",
+    "swingjs/headless_builder/provikom/j2s/builder/*.java",
+]

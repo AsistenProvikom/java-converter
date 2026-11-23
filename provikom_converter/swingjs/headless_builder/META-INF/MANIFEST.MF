@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Provikom Headless Java2Script Builder
+Bundle-SymbolicName: provikom.j2s.builder;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Vendor: Provikom
+Require-Bundle: org.eclipse.core.runtime,org.eclipse.core.resources,org.eclipse.jdt.core,org.eclipse.equinox.app
+Bundle-RequiredExecutionEnvironment: JavaSE-17

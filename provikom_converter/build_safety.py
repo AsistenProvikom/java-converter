@@ -134,6 +134,54 @@ def validate_output_directory(
     return source, output
 
 
+def validate_source_output_directory(
+    source_directory: Union[str, Path],
+    output_directory: Union[str, Path],
+) -> Tuple[Path, Path]:
+    """Validate an artifact output path against a Java source project.
+
+    The output must not replace the source directory, its parent, an ancestor,
+    or any directory that contains the source project. Output inside the source
+    project (for example ``<project>/build``) is allowed.
+    """
+    source = _resolve(source_directory)
+    if not source.is_dir():
+        raise BuildPathError(f"Input source directory does not exist: {source}")
+
+    raw_output = Path(output_directory).expanduser()
+    _reject_path_traversal(raw_output)
+    _reject_symlink_components(raw_output, "output directory")
+    output = _resolve(raw_output)
+
+    if output == Path(output.anchor):
+        raise BuildPathError(
+            f"Refusing to use filesystem root '{output}' as an artifact output directory."
+        )
+
+    if output == source:
+        raise BuildPathError(
+            f"Output directory '{output}' is the source project itself. Choose a separate directory."
+        )
+
+    if output == source.parent or output in source.parents:
+        raise BuildPathError(
+            f"Output directory '{output}' is an ancestor of the source project '{source}'. "
+            "Choose a child or sibling directory."
+        )
+
+    try:
+        source.relative_to(output)
+    except ValueError:
+        pass
+    else:
+        raise BuildPathError(
+            f"Source project '{source}' is inside output directory '{output}'. "
+            "Refusing to replace a directory that contains the source project."
+        )
+
+    return source, output
+
+
 def _target_is_empty(directory: Path) -> bool:
     try:
         next(directory.iterdir())
@@ -235,6 +283,28 @@ def _manifest_game_jar_matches(directory: Path, manifest: Dict) -> bool:
     return _sha256_file(jar_path) == digest.lower()
 
 
+def _manifest_source_matches(directory: Path, manifest: Dict) -> bool:
+    source = manifest.get("source_project")
+    if not isinstance(source, dict):
+        return False
+    generated_js = _safe_artifact_file(directory, source.get("generated_js"))
+    if generated_js is None:
+        return False
+    digest = source.get("generated_js_sha256")
+    if not _is_sha256(digest):
+        return False
+    if _sha256_file(generated_js) != digest.lower():
+        return False
+    project_sha = source.get("source_sha256")
+    return _is_sha256(project_sha)
+
+
+def _manifest_payload_matches(directory: Path, manifest: Dict) -> bool:
+    if manifest.get("backend") == "swingjs":
+        return _manifest_source_matches(directory, manifest)
+    return _manifest_game_jar_matches(directory, manifest)
+
+
 def _has_valid_ownership_marker(
     directory: Path, manifest: Dict, manifest_bytes: bytes
 ) -> bool:
@@ -248,11 +318,11 @@ def _has_valid_ownership_marker(
     manifest_digest = marker.get("manifest_sha256")
     required = {
         "index.html",
-        "style.css",
-        "app.js",
         "manifest.json",
         OWNERSHIP_MARKER_FILENAME,
     }
+    if manifest.get("backend") == "cheerpj":
+        required.update({"style.css", "app.js"})
     jar_name = manifest.get("jar_file")
     if isinstance(jar_name, str):
         required.add(jar_name)
@@ -268,7 +338,7 @@ def _has_valid_ownership_marker(
         and _is_sha256(manifest_digest)
         and hashlib.sha256(manifest_bytes).hexdigest() == manifest_digest.lower()
         and _generated_files_are_intact(directory, manifest, required)
-        and _manifest_game_jar_matches(directory, manifest)
+        and _manifest_payload_matches(directory, manifest)
     )
 
 
@@ -421,6 +491,36 @@ def atomic_output_directory(
     """
     raw_output = Path(output_directory).expanduser()
     _source, target_dir = validate_output_directory(source_jar_path, raw_output)
+
+    parent = target_dir.parent
+    parent.mkdir(parents=True, exist_ok=True)
+
+    _check_replaceable_target(target_dir, force_overwrite)
+
+    temp_dir = Path(
+        tempfile.mkdtemp(prefix=f".{target_dir.name}.provikom-tmp-", dir=str(parent))
+    )
+    try:
+        yield temp_dir
+        _reject_symlink_components(raw_output, "output directory")
+        _publish(temp_dir, target_dir, force_overwrite)
+    except BaseException:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
+    finally:
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@contextmanager
+def atomic_source_output_directory(
+    source_directory: Union[str, Path],
+    output_directory: Union[str, Path],
+    force_overwrite: bool = False,
+) -> Iterator[Path]:
+    """Yield a temporary artifact directory for a source project build."""
+    raw_output = Path(output_directory).expanduser()
+    _source, target_dir = validate_source_output_directory(source_directory, raw_output)
 
     parent = target_dir.parent
     parent.mkdir(parents=True, exist_ok=True)
