@@ -149,3 +149,38 @@ predictions and are not rewritten by verification.
   load.
 - Runtime evidence is written to `verification.json` next to the artifact and
   referenced from the manifest lifecycle block.
+
+---
+
+## Artifact Manifest Schema
+
+The artifact manifest is separate from the compatibility report. Schema `1.1`
+adds `lifecycle` and supports two backend-specific shapes under the same `$id`:
+
+### CheerpJ JAR artifact
+
+Required backend fields include `runtime_version`, `jar_file`,
+`java_major_version`, the JAR identity fields under `game`, and the JAR paths
+under `paths`.
+
+### SwingJS source artifact
+
+Required backend fields include:
+
+| Field | Meaning |
+|---|---|
+| `source_project.main_class` | Selected Java entry point. |
+| `source_project.source_sha256` | Deterministic hash of all Java source files. |
+| `source_project.files` | Relative path and SHA-256 for each source file. |
+| `source_project.generated_js` | Generated JavaScript path inside the artifact. |
+| `source_project.generated_js_sha256` | Hash of the generated application JavaScript. |
+| `runtime` | SwingJS/Java2Script runtime and compiler versions. |
+| `toolchain` | Pinned JDK, Eclipse, Java2Script, and runtime hashes. |
+| `paths.web_root` / `paths.virtual_mount_root` | Static hosting roots. |
+| `ownership` | Artifact ID and ownership marker binding. |
+
+SwingJS source manifests intentionally have no `jar_file` and are not valid
+CheerpJ manifests. Artifact readers must branch on `backend`.
+
+`source_project` and `toolchain` are defined in the schema, but additional
+diagnostic fields may be present. Unknown fields remain forward-compatible.
